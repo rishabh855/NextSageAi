@@ -9,4 +9,4 @@ C003,Rule check failure: VLAN 30 assigned to Fa0/5 is missing from switch VLAN d
 C008,Rule check failure: Subnet mask mismatch: Host uses 255.255.0.0 (/16) while network interface uses 255.255.255.0 (/24).,high,Accepted,Subnet mask mismatch on host PC.,Accepted. AI correctly flagged subnet mask mismatch.,2026-08-23 10:56:21
 C026,Missing 'ip nat inside' on Gi0/0 and 'ip nat outside' on Gi0/1 interface configurations.,medium,Accepted,Missing ip nat inside / ip nat outside commands on router interfaces.,Accepted. AI accurately identified missing NAT interface statements.,2026-08-23 10:56:21
 C030,Rule check failure: VLAN 50 is missing from the switch VLAN database.,high,Accepted,WLAN mapped VLAN 50 missing from switch database.,Accepted. AI correctly identified WLAN VLAN missing from switch.,2026-08-23 10:56:21
-VERIFY-001,"Rule check failure: VLAN trunking mismatch: VLAN 20,30 is allowed on Switch1 trunk but disallowed/missing on Switch0.",high,Edited,Pipeline verification test correction.,Pipeline verification test review note.,2026-08-23 10:57:25
+

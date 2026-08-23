@@ -24,7 +24,11 @@ def fill_prompt(symptom: str, topology_note: str, show_output: str, template: Op
     """
     if template is None:
         template = load_prompt_template()
-    return f"""Symptom: {symptom}
+    return f"""{template}
+
+Now diagnose this case:
+
+Symptom: {symptom}
 Topology Note: {topology_note}
 Show Output:
 {show_output}

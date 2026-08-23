@@ -12,7 +12,7 @@ from dashboard.analytics import AnalyticsManager
 
 CASES_CSV_PATH = os.path.join("data", "cases.csv")
 AI_RESPONSES_PATH = os.path.join("data", "ai_responses.csv")
-LOG_CSV_PATH = os.path.join("data", "responsible_ai_log.csv")
+LOG_CSV_PATH = os.path.join("data", "verify_pipeline_test_log.csv")
 
 def verify_pipeline() -> bool:
     """
@@ -78,9 +78,9 @@ def verify_pipeline() -> bool:
         df_log = pd.read_csv(LOG_CSV_PATH, dtype=str).fillna("")
         test_row = df_log[df_log["case_id"] == "VERIFY-001"]
         if not test_row.empty:
-            print("  [PASS] STAGE 3: Human review recorded and verified in data/responsible_ai_log.csv.")
+            print("  [PASS] STAGE 3: Human review recorded and verified in temporary test log.")
         else:
-            print("  [FAIL] STAGE 3: Human review record not found in data/responsible_ai_log.csv.")
+            print("  [FAIL] STAGE 3: Human review record not found in temporary test log.")
             stage_pass = False
     except Exception as e:
         print(f"  [FAIL] STAGE 3: {e}")
@@ -96,13 +96,20 @@ def verify_pipeline() -> bool:
         
         kpis = AnalyticsManager.get_kpis(df_cases, df_reviews)
         if kpis and kpis.get("total_cases", 0) >= 35 and kpis.get("agreement_rate") is not None:
-            print(f"  [PASS] STAGE 4: Dashboard analytics computed cleanly (Total Cases: {kpis['total_cases']}, Reviews: {kpis['total_reviews']}, Agreement Rate: {kpis['agreement_rate']}%).")
+            print(f"  [PASS] STAGE 4: Dashboard analytics computed cleanly (Total Cases: {kpis['total_cases']}, Test Reviews: {kpis['total_reviews']}, Agreement Rate: {kpis['agreement_rate']}%).")
         else:
             print("  [FAIL] STAGE 4: Dashboard analytics computation failed.")
             stage_pass = False
     except Exception as e:
         print(f"  [FAIL] STAGE 4: {e}")
         stage_pass = False
+
+    # Cleanup temporary test log file
+    if os.path.exists(LOG_CSV_PATH):
+        try:
+            os.remove(LOG_CSV_PATH)
+        except Exception:
+            pass
 
     print("\n" + "=" * 70)
     if stage_pass:
