@@ -1,0 +1,3 @@
+interface FastEthernet0/1
+ switchport trunk allowed vlan 20
+ switchport mode trunk
