@@ -4,6 +4,22 @@ import re
 import datetime
 from typing import Dict, Any, List, Optional
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
+if not os.environ.get("GEMINI_API_KEY") and os.path.exists(".env"):
+    try:
+        with open(".env", "r", encoding="utf-8") as f:
+            for line in f:
+                if "=" in line and not line.strip().startswith("#"):
+                    k, v = line.strip().split("=", 1)
+                    os.environ[k.strip()] = v.strip().strip('"').strip("'")
+    except Exception:
+        pass
+
 class AIDiagnosisEngine:
     """
     NetSage AI Diagnosis Engine.
