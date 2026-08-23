@@ -1,6 +1,6 @@
 # NetSage AI — Worked Diagnostic Examples
 
-This file provides 3 worked reference examples demonstrating NetSage AI's structured diagnostic pipeline across Layer 2, Layer 3, and Layer 4-7 issues.
+This file provides reference worked examples demonstrating NetSage AI's structured diagnostic pipeline across Layer 2 VLAN/Trunking, Guest Wi-Fi Isolation, and Layer 3 Routing issues.
 
 ---
 
@@ -31,14 +31,14 @@ This file provides 3 worked reference examples demonstrating NetSage AI's struct
 ### Structured AI Diagnosis Response
 ```json
 {
-  "root_cause": "VLAN 10 traffic is blocked across the trunk link because VLAN 10 is missing from the allowed VLAN list on Switch2 interface GigabitEthernet0/1.",
-  "confidence": "High",
-  "evidence": [
+  "likely_root_cause": "VLAN 10 traffic is blocked across the trunk link because VLAN 10 is missing from the allowed VLAN list on Switch2 interface GigabitEthernet0/1.",
+  "confidence_score": "High",
+  "evidence_cited": [
     "Switch1 show interfaces trunk lists VLAN 10 under active VLANs on Gi0/1 (1,10,20)",
     "Switch2 show interfaces trunk lists allowed VLANs as 1,20,30 on Gi0/1, omitting VLAN 10"
   ],
-  "next_command": "show interfaces trunk",
-  "fix_steps": [
+  "recommended_next_command": "show interfaces trunk",
+  "suggested_fix": [
     "Access Switch2 command line in global configuration mode",
     "Navigate to interface GigabitEthernet0/1: 'interface GigabitEthernet0/1'",
     "Add VLAN 10 to allowed trunk list: 'switchport trunk allowed vlan add 10'"
@@ -50,7 +50,50 @@ This file provides 3 worked reference examples demonstrating NetSage AI's struct
 
 ---
 
-## Example 2: Layer 3 / Routing Issue (Missing Static Route)
+## Example 2: Wireless & Guest Wi-Fi Isolation (Missing Access List on Subinterface)
+
+### Input
+- **Case ID**: C032
+- **Category**: Wireless
+- **Symptom**: Guest Wi-Fi laptop in VLAN 99 can access internal corporate database server 10.0.0.50 on port 3306.
+- **Topology Note**: Guest Laptop -> AP1 -> Switch1 (Gi0/1) -> Router1 subinterface Gi0/0.99 (192.168.99.1/24) -> Corporate Server (10.0.0.50).
+- **Show Command Evidence**:
+  ```text
+  --- Router1 show running-config interface Gi0/0.99 ---
+  interface GigabitEthernet0/0.99
+   encapsulation dot1Q 99
+   ip address 192.168.99.1 255.255.255.0
+
+  --- Router1 show ip access-lists GUEST_ISOLATION ---
+  Extended IP access list GUEST_ISOLATION
+      10 deny ip 192.168.99.0 0.0.0.255 10.0.0.0 0.255.255.255
+      20 permit ip any any
+  ```
+- **Rule Checker Result**:
+  - `Interface Status Check`: PASS
+
+### Structured AI Diagnosis Response
+```json
+{
+  "likely_root_cause": "Subinterface GigabitEthernet0/0.99 lacks an in-bound access group binding, leaving access list GUEST_ISOLATION unapplied and allowing guest Wi-Fi clients to reach corporate internal servers.",
+  "confidence_score": "High",
+  "evidence_cited": [
+    "show running-config interface Gi0/0.99 shows no 'ip access-group GUEST_ISOLATION in' statement",
+    "show ip access-lists GUEST_ISOLATION confirms isolation rule exists but is not bound to the subinterface"
+  ],
+  "recommended_next_command": "show running-config interface Gi0/0.99",
+  "suggested_fix": [
+    "Enter Router1 global configuration mode: 'interface GigabitEthernet0/0.99'",
+    "Bind isolation access list to subinterface: 'ip access-group GUEST_ISOLATION in'"
+  ],
+  "osi_layer": "Layer 3",
+  "concept": "Wireless Guest Isolation ACL"
+}
+```
+
+---
+
+## Example 3: Layer 3 / Routing Issue (Missing Static Route)
 
 ### Input
 - **Case ID**: C017
@@ -77,60 +120,18 @@ This file provides 3 worked reference examples demonstrating NetSage AI's struct
 ### Structured AI Diagnosis Response
 ```json
 {
-  "root_cause": "Router1 lacks a routing table entry (static or dynamic route) for the destination network 10.0.30.0/24, causing packets sent to 10.0.30.50 to be dropped.",
-  "confidence": "High",
-  "evidence": [
+  "likely_root_cause": "Router1 lacks a routing table entry (static or dynamic route) for the destination network 10.0.30.0/24, causing packets sent to 10.0.30.50 to be dropped.",
+  "confidence_score": "High",
+  "evidence_cited": [
     "Router1 show ip route displays 'Gateway of last resort is not set' and contains no route for 10.0.30.0/24",
     "Router1 show access-lists shows 'No access lists configured', ruling out packet filtering"
   ],
-  "next_command": "show ip route",
-  "fix_steps": [
+  "recommended_next_command": "show ip route",
+  "suggested_fix": [
     "Log into Router1 global configuration prompt",
     "Add static route to destination subnet via next-hop router: 'ip route 10.0.30.0 255.255.255.0 172.16.12.2'"
   ],
   "osi_layer": "Layer 3",
   "concept": "Missing Static Route"
-}
-```
-
----
-
-## Example 3: Layer 4–7 / Security Issue (ACL Implicit Deny)
-
-### Input
-- **Case ID**: C022
-- **Category**: ACL
-- **Symptom**: PC-A (192.168.10.5) cannot access Web Server (10.0.0.100) on port 80.
-- **Topology Note**: Router1 interface Gi0/1 outbound ACL named BLOCK_WEB.
-- **Show Command Evidence**:
-  ```text
-  --- Router1 show ip access-lists BLOCK_WEB ---
-  Extended IP access list BLOCK_WEB
-      10 deny tcp host 192.168.10.5 host 10.0.0.100 eq 80
-      (implicit deny ip any any at end of list)
-
-  --- Router1 show ip interface Gi0/1 ---
-  GigabitEthernet0/1 is up, line protocol is up
-    Outbound access list is BLOCK_WEB
-  ```
-- **Rule Checker Result**:
-  - `Interface Status Check`: PASS
-
-### Structured AI Diagnosis Response
-```json
-{
-  "root_cause": "Access list BLOCK_WEB contains a deny rule for port 80 traffic from host 192.168.10.5 to web server 10.0.0.100, and lacks an explicit permit statement, causing all other traffic to hit the implicit deny at the end of the ACL.",
-  "confidence": "High",
-  "evidence": [
-    "show ip access-lists BLOCK_WEB contains rule '10 deny tcp host 192.168.10.5 host 10.0.0.100 eq 80'",
-    "show ip interface Gi0/1 confirms outbound access list BLOCK_WEB is active"
-  ],
-  "next_command": "show access-lists BLOCK_WEB",
-  "fix_steps": [
-    "Enter Router1 global configuration mode: 'ip access-list extended BLOCK_WEB'",
-    "If Web access should be permitted for other hosts/ports, add explicit permit rule: '20 permit ip any any'"
-  ],
-  "osi_layer": "Layer 4",
-  "concept": "ACL Implicit Deny"
 }
 ```

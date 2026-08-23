@@ -13,9 +13,6 @@ class AnalyticsManager:
         df_reviews: pd.DataFrame,
         df_verifications: Optional[pd.DataFrame] = None
     ) -> Dict[str, Any]:
-        """
-        Computes high-level KPI metrics from cases, human reviews, and manual verifications.
-        """
         total_cases = len(df_cases) if df_cases is not None else 0
         total_reviews = len(df_reviews) if df_reviews is not None and not df_reviews.empty else 0
         total_verifications = len(df_verifications) if df_verifications is not None and not df_verifications.empty else 0
@@ -26,10 +23,18 @@ class AnalyticsManager:
         agreement_rate = None
         resolved_count = 0
 
-        if total_reviews > 0 and "human_decision" in df_reviews.columns:
-            accepted_count = int((df_reviews["human_decision"] == "Accept").sum())
-            edited_count = int((df_reviews["human_decision"] == "Edit").sum())
-            rejected_count = int((df_reviews["human_decision"] == "Reject").sum())
+        verdict_col = None
+        if df_reviews is not None and not df_reviews.empty:
+            if "human_verdict" in df_reviews.columns:
+                verdict_col = "human_verdict"
+            elif "human_decision" in df_reviews.columns:
+                verdict_col = "human_decision"
+
+        if total_reviews > 0 and verdict_col:
+            v_series = df_reviews[verdict_col].astype(str).str.strip().str.lower()
+            accepted_count = int((v_series.isin(["accept", "accepted"])).sum())
+            edited_count = int((v_series.isin(["edit", "edited"])).sum())
+            rejected_count = int((v_series.isin(["reject", "rejected"])).sum())
             agreement_rate = round((accepted_count / total_reviews) * 100.0, 1)
 
         if total_verifications > 0 and "verification_result" in df_verifications.columns:
@@ -69,20 +74,40 @@ class AnalyticsManager:
 
     @staticmethod
     def get_decision_counts(df_reviews: pd.DataFrame) -> Dict[str, int]:
-        if df_reviews is None or df_reviews.empty or "human_decision" not in df_reviews.columns:
-            return {"Accept": 0, "Edit": 0, "Reject": 0}
-        counts = df_reviews["human_decision"].value_counts().to_dict()
+        if df_reviews is None or df_reviews.empty:
+            return {"Accept": 0, "Accepted": 0, "Edit": 0, "Edited": 0, "Reject": 0, "Rejected": 0}
+        
+        verdict_col = "human_verdict" if "human_verdict" in df_reviews.columns else ("human_decision" if "human_decision" in df_reviews.columns else None)
+        if not verdict_col:
+            return {"Accept": 0, "Accepted": 0, "Edit": 0, "Edited": 0, "Reject": 0, "Rejected": 0}
+
+        v_series = df_reviews[verdict_col].astype(str).str.strip().str.capitalize()
+        counts = v_series.value_counts().to_dict()
+        
+        acc = counts.get("Accepted", 0) + counts.get("Accept", 0)
+        edi = counts.get("Edited", 0) + counts.get("Edit", 0)
+        rej = counts.get("Rejected", 0) + counts.get("Reject", 0)
+
         return {
-            "Accept": counts.get("Accept", 0),
-            "Edit": counts.get("Edit", 0),
-            "Reject": counts.get("Reject", 0)
+            "Accept": acc,
+            "Accepted": acc,
+            "Edit": edi,
+            "Edited": edi,
+            "Reject": rej,
+            "Rejected": rej
         }
 
     @staticmethod
     def get_confidence_counts(df_reviews: pd.DataFrame) -> Dict[str, int]:
-        if df_reviews is None or df_reviews.empty or "ai_confidence" not in df_reviews.columns:
+        if df_reviews is None or df_reviews.empty:
             return {"High": 0, "Medium": 0, "Low": 0}
-        counts = df_reviews["ai_confidence"].value_counts().to_dict()
+        
+        col = "ai_confidence" if "ai_confidence" in df_reviews.columns else None
+        if not col:
+            return {"High": 0, "Medium": 0, "Low": 0}
+
+        v_series = df_reviews[col].astype(str).str.strip().str.capitalize()
+        counts = v_series.value_counts().to_dict()
         return {
             "High": counts.get("High", 0),
             "Medium": counts.get("Medium", 0),

@@ -11,6 +11,7 @@ class AIDiagnosisEngine:
     or a deterministic offline fallback engine when API credentials are absent.
     Supports guided investigation states: NO_CONFIRMED_ISSUE, NEED_MORE_EVIDENCE, ISSUE_CONFIRMED.
     Validates recommended devices against user-supplied network inventory.
+    Output schemas normalize the 5 core PDF fields (likely_root_cause, confidence_score, evidence_cited, recommended_next_command, suggested_fix).
     """
 
     REQUIRED_SCHEMA_KEYS = {
@@ -20,6 +21,43 @@ class AIDiagnosisEngine:
 
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
+
+    @staticmethod
+    def normalize_keys(data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Normalizes JSON schema keys between PDF format and internal keys.
+        """
+        if not isinstance(data, dict):
+            return data
+        
+        normalized = dict(data)
+        if "likely_root_cause" in normalized and "root_cause" not in normalized:
+            normalized["root_cause"] = normalized["likely_root_cause"]
+        if "root_cause" in normalized and "likely_root_cause" not in normalized:
+            normalized["likely_root_cause"] = normalized["root_cause"]
+
+        if "confidence_score" in normalized and "confidence" not in normalized:
+            normalized["confidence"] = normalized["confidence_score"]
+        if "confidence" in normalized and "confidence_score" not in normalized:
+            normalized["confidence_score"] = normalized["confidence"]
+
+        if "evidence_cited" in normalized and "evidence" not in normalized:
+            normalized["evidence"] = normalized["evidence_cited"]
+        if "evidence" in normalized and "evidence_cited" not in normalized:
+            normalized["evidence_cited"] = normalized["evidence"]
+
+        if "recommended_next_command" in normalized and "next_command" not in normalized:
+            normalized["next_command"] = normalized["recommended_next_command"]
+        if "next_command" in normalized and "recommended_next_command" not in normalized:
+            normalized["recommended_next_command"] = normalized["next_command"]
+
+        if "suggested_fix" in normalized and "fix_steps" not in normalized:
+            fix = normalized["suggested_fix"]
+            normalized["fix_steps"] = fix if isinstance(fix, list) else [str(fix)]
+        if "fix_steps" in normalized and "suggested_fix" not in normalized:
+            normalized["suggested_fix"] = normalized["fix_steps"]
+
+        return normalized
 
     def build_prompt(self, case_info: Dict[str, Any], rule_results: List[Dict[str, Any]]) -> str:
         rule_summary = ""
@@ -51,12 +89,12 @@ Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
 1. Base your root cause strictly on the supplied evidence above.
 2. Do NOT invent commands, test results, non-existent devices, or topology links.
 3. Determine investigation status:
-   - "ISSUE_CONFIRMED": When evidence fully pinpoints the root cause. Set confidence to High.
-   - "NEED_MORE_EVIDENCE": When evidence shows suspicious symptoms but root cause needs verification. Set confidence to Medium.
-   - "NO_CONFIRMED_ISSUE": When evidence is normal or incomplete. Set confidence to Low.
-4. Provide next_device, next_command, and reason_for_command when status is NOT ISSUE_CONFIRMED.
+   - "ISSUE_CONFIRMED": When evidence fully pinpoints the root cause. Set confidence_score to High.
+   - "NEED_MORE_EVIDENCE": When evidence shows suspicious symptoms but root cause needs verification. Set confidence_score to Medium.
+   - "NO_CONFIRMED_ISSUE": When evidence is normal or incomplete. Set confidence_score to Low.
+4. Provide next_device, recommended_next_command, and reason_for_command when status is NOT ISSUE_CONFIRMED.
 5. Output MUST be valid JSON with keys:
-   "status", "root_cause", "confidence", "evidence", "next_device", "next_command", "reason_for_command", "fix_steps", "osi_layer", "concept".
+   "status", "likely_root_cause", "confidence_score", "evidence_cited", "next_device", "recommended_next_command", "reason_for_command", "suggested_fix", "osi_layer", "concept".
 """
         return prompt
 
@@ -64,16 +102,18 @@ Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
         if not isinstance(data, dict):
             return False
 
-        if not self.REQUIRED_SCHEMA_KEYS.issubset(data.keys()):
+        normalized = self.normalize_keys(data)
+
+        if not self.REQUIRED_SCHEMA_KEYS.issubset(normalized.keys()):
             return False
 
-        if data.get("confidence") not in {"High", "Medium", "Low"}:
+        if normalized.get("confidence") not in {"High", "Medium", "Low"}:
             return False
 
-        if not isinstance(data.get("evidence"), list):
+        if not isinstance(normalized.get("evidence"), list):
             return False
 
-        if not isinstance(data.get("fix_steps"), list):
+        if not isinstance(normalized.get("fix_steps"), list):
             return False
 
         return True
@@ -91,10 +131,11 @@ Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
         try:
             parsed = json.loads(clean_text)
             if self.validate_schema(parsed):
-                parsed.setdefault("status", "ISSUE_CONFIRMED" if parsed.get("confidence") == "High" else "NEED_MORE_EVIDENCE")
-                parsed.setdefault("next_device", "Switch0")
-                parsed.setdefault("reason_for_command", "Verify device configuration.")
-                return parsed
+                normalized = self.normalize_keys(parsed)
+                normalized.setdefault("status", "ISSUE_CONFIRMED" if normalized.get("confidence") == "High" else "NEED_MORE_EVIDENCE")
+                normalized.setdefault("next_device", "Switch0")
+                normalized.setdefault("reason_for_command", "Verify device configuration.")
+                return normalized
         except (json.JSONDecodeError, TypeError):
             pass
 
@@ -106,15 +147,9 @@ Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
         show_outputs: str,
         inventory: Optional[Dict[str, Any]] = None
     ) -> tuple[str, str, str]:
-        """
-        Helper to select the next logical device, command, and rationale based on symptom domain,
-        network inventory, and previously executed commands in show_outputs.
-        Validates target device against available inventory to prevent non-existent device references.
-        """
         symptom_low = symptom.lower()
         show_low = show_outputs.lower()
 
-        # Extract device lists validated against inventory counts
         routers = []
         switches = []
         end_devices = []
@@ -131,11 +166,9 @@ Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
             switches = ["Switch0", "Switch1"]
             end_devices = ["PC0", "PC1"]
 
-        # Determine primary and secondary available devices
         primary_dev = routers[0] if routers else (switches[0] if switches else (end_devices[0] if end_devices else "Device"))
         secondary_dev = switches[0] if (switches and primary_dev != switches[0]) else (switches[1] if len(switches) > 1 else primary_dev)
 
-        # 1. Switching / VLAN domain (or when no routers exist in network inventory)
         if "vlan" in symptom_low or "trunk" in symptom_low or not routers:
             target_switch = switches[0] if switches else primary_dev
             target_switch2 = switches[1] if len(switches) > 1 else target_switch
@@ -159,7 +192,6 @@ Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
                     f"Inspect interface running configuration on {target_switch} to verify switchport settings."
                 )
 
-        # 2. Routing / Gateway domain (when routers exist in network inventory)
         elif "route" in symptom_low or "ping" in symptom_low or "gateway" in symptom_low or "server" in symptom_low:
             if "show ip route" not in show_low:
                 return (
@@ -180,7 +212,6 @@ Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
                     f"Inspect global running configuration on {primary_dev} to check routing protocol and ACL statements."
                 )
 
-        # 3. DHCP domain
         elif "dhcp" in symptom_low or "ip address" in symptom_low:
             if "show ip dhcp binding" not in show_low and routers:
                 return (
@@ -195,7 +226,6 @@ Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
                     f"Inspect configuration settings on {primary_dev}."
                 )
 
-        # 4. Default fallback validated against available inventory
         if "show ip interface brief" not in show_low and routers:
             return (
                 primary_dev,
@@ -216,11 +246,6 @@ Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
             )
 
     def diagnose_offline(self, case_info: Dict[str, Any], rule_results: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """
-        Deterministic offline fallback engine.
-        Supports guided states: NO_CONFIRMED_ISSUE, NEED_MORE_EVIDENCE, ISSUE_CONFIRMED.
-        Validates device selection against network inventory.
-        """
         failed_rules = [r for r in rule_results if r.get("status") == "FAIL"]
         show_outputs = case_info.get("show_outputs", "")
         symptom = case_info.get("symptom", "")
@@ -259,12 +284,17 @@ Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
         diagnosis = {
             "status": status,
             "root_cause": root_cause,
+            "likely_root_cause": root_cause,
             "confidence": confidence,
+            "confidence_score": confidence,
             "evidence": evidence,
+            "evidence_cited": evidence,
             "next_device": next_dev,
             "next_command": next_cmd,
+            "recommended_next_command": next_cmd,
             "reason_for_command": reason_cmd,
             "fix_steps": fix_steps,
+            "suggested_fix": fix_steps,
             "osi_layer": case_info.get("osi_layer", "Layer 3"),
             "concept": case_info.get("concept", "General Network Fault"),
             "ai_mode": "Offline Demo"

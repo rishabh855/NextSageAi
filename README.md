@@ -57,16 +57,28 @@ NetSage AI is an AI-assisted network troubleshooting application for Cisco Packe
 NetSage-AI/
 ├── data/
 │   ├── cases.csv                # 35 troubleshooting cases across 9 categories
-│   └── responsible_ai_log.csv   # Dynamic log recording genuine human reviews (Accept/Edit/Reject)
+│   ├── ai_responses.csv         # Batch AI diagnostic outputs for 35 cases
+│   ├── responsible_ai_log.csv   # Dynamic log recording genuine human reviews (Accept/Edit/Reject)
+│   └── verification_log.csv    # Manual Packet Tracer fix & verification log
 ├── checker/
 │   ├── rule_checker.py          # Deterministic Python network check engine
+│   ├── human_review.py          # CLI / module for human review logging
 │   └── test_rule_checker.py     # Unit test suite
-├── ai/                          # AI Engine (Milestone 4)
-├── prompts/                     # Structured AI prompt templates & worked examples (Milestone 4)
-├── dashboard/                   # Streamlit web interface (Milestone 6)
-├── packet_tracer/               # Base Packet Tracer topologies & guides (Milestone 5)
+├── ai/
+│   ├── diagnose.py              # LLM diagnosis engine (Claude Sonnet 4.6 / Gemini / Offline engine)
+│   ├── diagnosis.py             # Diagnosis Engine implementation
+│   └── run_all_cases.py         # Batch execution script across 35 cases
+├── prompts/
+│   ├── diagnose_prompt.md       # Structured system prompt with JSON schema
+│   └── examples.md              # Worked reference examples (VLAN/ACL, Guest Wi-Fi, Missing Route)
+├── dashboard/
+│   ├── app.py                   # Streamlit web application
+│   ├── session_manager.py       # Interactive session & inventory manager
+│   ├── analytics.py             # Dashboard KPI & metrics aggregator
+│   └── review_manager.py        # Human review manager
 ├── scripts/
-│   └── generate_dataset.py      # Dataset generation script
+│   ├── run_batch_diagnosis.py   # Batch execution runner
+│   └── verify_pipeline.py       # End-to-end pipeline verification test script
 ├── requirements.txt             # Project Python dependencies
 └── README.md                    # Project documentation
 ```
@@ -80,9 +92,19 @@ NetSage-AI/
 pip install -r requirements.txt
 ```
 
-### 2. Run Deterministic Rule Checker Tests
+### 2. Run All Unit Tests
 ```bash
-python -m unittest discover -s checker
+python -m unittest discover -s . -v
+```
+
+### 3. Run End-to-End Pipeline Verification
+```bash
+python -m scripts.verify_pipeline
+```
+
+### 4. Launch Streamlit Dashboard
+```bash
+python -m streamlit run dashboard/app.py
 ```
 
 ---
@@ -92,7 +114,7 @@ python -m unittest discover -s checker
 - [x] **Milestone 1**: Project Skeleton & Architecture Setup
 - [x] **Milestone 2**: Dataset & Evidence Management (`data/cases.csv` + `evidence_status`)
 - [x] **Milestone 3**: Deterministic Rule Checker Engine & Unit Tests (`checker/`)
-- [ ] **Milestone 4**: AI Diagnosis Engine & Structured Prompts (`ai/`, `prompts/`)
-- [ ] **Milestone 5**: Human Review & Responsible AI Logger (`data/responsible_ai_log.csv`)
-- [ ] **Milestone 6**: Fix & Verification Workflow + Streamlit Dashboard (`dashboard/app.py`)
-- [ ] **Milestone 7**: End-to-End Verification & Verification Walkthrough
+- [x] **Milestone 4**: AI Diagnosis Engine & Structured Prompts (`ai/`, `prompts/`, `ai/run_all_cases.py`)
+- [x] **Milestone 5**: Human Review & Responsible AI Logger (`checker/human_review.py`, `data/responsible_ai_log.csv`)
+- [x] **Milestone 6**: Fix & Verification Workflow + Streamlit Dashboard (`dashboard/app.py`, `data/ai_responses.csv`)
+- [x] **Milestone 7**: End-to-End Pipeline Verification (`scripts/verify_pipeline.py`)
