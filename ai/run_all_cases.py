@@ -1,5 +1,6 @@
 import os
 import csv
+import time
 import pandas as pd
 from ai.diagnose import diagnose_case
 from dashboard.evidence_loader import load_case_evidence
@@ -60,6 +61,9 @@ def run_all_cases(cases_path: str = CASES_CSV_PATH, output_path: str = OUTPUT_CS
 
         results.append(record)
         print(f"  Processed Case {case_id} [{category}] - Confidence: {record['ai_confidence']} - Mode: {record['ai_mode']}", flush=True)
+
+        if idx < len(df_cases) - 1:
+            time.sleep(4.2)
 
     df_out = pd.DataFrame(results)
     

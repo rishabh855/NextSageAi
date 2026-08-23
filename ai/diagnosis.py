@@ -326,7 +326,7 @@ Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
             client = genai.Client(api_key=self.api_key)
             prompt = self.build_prompt(case_info, rule_results)
             
-            for m_name in ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash"]:
+            for m_name in ["gemini-flash-latest", "gemini-2.5-flash"]:
                 try:
                     response = client.models.generate_content(
                         model=m_name,

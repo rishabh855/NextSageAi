@@ -1,0 +1,2 @@
+--- [Router0] show ip interface brief ---
+..

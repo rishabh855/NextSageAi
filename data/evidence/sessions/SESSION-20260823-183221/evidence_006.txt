@@ -1,0 +1,4 @@
+--- [Switch0] show running-config ---
+interface FastEthernet0/1
+ switchport access vlan 10
+ switchport mode access

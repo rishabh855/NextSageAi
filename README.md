@@ -72,10 +72,12 @@ NetSage-AI/
 │   ├── diagnose_prompt.md       # Structured system prompt with JSON schema
 │   └── examples.md              # Worked reference examples (VLAN/ACL, Guest Wi-Fi, Missing Route)
 ├── dashboard/
-│   ├── app.py                   # Streamlit web application
+│   ├── app.py                   # Streamlit web application (Case Explorer, Guided Assistant, Analytics)
 │   ├── session_manager.py       # Interactive session & inventory manager
 │   ├── analytics.py             # Dashboard KPI & metrics aggregator
 │   └── review_manager.py        # Human review manager
+├── packet_tracer/
+│   └── cases/                   # Physical Packet Tracer topology labs (C001, C002)
 ├── scripts/
 │   ├── run_batch_diagnosis.py   # Batch execution runner
 │   └── verify_pipeline.py       # End-to-end pipeline verification test script

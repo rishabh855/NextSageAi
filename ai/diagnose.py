@@ -185,8 +185,8 @@ def diagnose_case(case_dict: Dict[str, Any]) -> Dict[str, Any]:
         try:
             from google import genai
             client = genai.Client(api_key=gemini_key)
-            # Try gemini-3.6-flash
-            for m_name in ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash"]:
+            # Try gemini-flash-latest
+            for m_name in ["gemini-flash-latest", "gemini-2.5-flash"]:
                 try:
                     resp = client.models.generate_content(
                         model=m_name,
@@ -198,7 +198,11 @@ def diagnose_case(case_dict: Dict[str, Any]) -> Dict[str, Any]:
                         parsed["parse_error"] = False
                         parsed["ai_mode"] = f"Gemini ({m_name})"
                         return parsed
-                except Exception:
+                except Exception as err:
+                    err_str = str(err).lower()
+                    if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:
+                        import time
+                        time.sleep(6)
                     continue
         except Exception:
             pass
