@@ -1,0 +1,3 @@
+--- [Switch0] show running-config ---
+switchport access vlan 10
+ switchport mode access
