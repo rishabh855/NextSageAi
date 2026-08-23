@@ -169,16 +169,21 @@ def diagnose_case(case_dict: Dict[str, Any]) -> Dict[str, Any]:
         try:
             from google import genai
             client = genai.Client(api_key=gemini_key)
-            resp = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt_text
-            )
-            raw_text = resp.text if resp and hasattr(resp, "text") else ""
-            parsed = parse_json_response(raw_text)
-            if parsed:
-                parsed["parse_error"] = False
-                parsed["ai_mode"] = "Gemini 2.5 Flash"
-                return parsed
+            # Try gemini-3.6-flash
+            for m_name in ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash"]:
+                try:
+                    resp = client.models.generate_content(
+                        model=m_name,
+                        contents=prompt_text
+                    )
+                    raw_text = resp.text if resp and hasattr(resp, "text") else ""
+                    parsed = parse_json_response(raw_text)
+                    if parsed:
+                        parsed["parse_error"] = False
+                        parsed["ai_mode"] = f"Gemini ({m_name})"
+                        return parsed
+                except Exception:
+                    continue
         except Exception:
             pass
 

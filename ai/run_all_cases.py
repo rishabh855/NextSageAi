@@ -15,7 +15,7 @@ def run_all_cases(cases_path: str = CASES_CSV_PATH, output_path: str = OUTPUT_CS
         raise FileNotFoundError(f"Cases CSV dataset not found at {cases_path}")
 
     df_cases = pd.read_csv(cases_path, dtype=str).fillna("")
-    print(f"Starting batch AI diagnosis execution for {len(df_cases)} cases...")
+    print(f"Starting batch AI diagnosis execution for {len(df_cases)} cases...", flush=True)
 
     results = []
 
@@ -59,7 +59,7 @@ def run_all_cases(cases_path: str = CASES_CSV_PATH, output_path: str = OUTPUT_CS
         }
 
         results.append(record)
-        print(f"  Processed Case {case_id} [{category}] - Confidence: {record['ai_confidence']} - Mode: {record['ai_mode']}")
+        print(f"  Processed Case {case_id} [{category}] - Confidence: {record['ai_confidence']} - Mode: {record['ai_mode']}", flush=True)
 
     df_out = pd.DataFrame(results)
     
