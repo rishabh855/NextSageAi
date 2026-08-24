@@ -182,6 +182,7 @@ def diagnose_case(case_dict: Dict[str, Any]) -> Dict[str, Any]:
     # 2. Check Gemini API
     gemini_key = os.environ.get("GEMINI_API_KEY")
     if gemini_key:
+        quota_hit = False
         try:
             from google import genai
             client = genai.Client(api_key=gemini_key)
@@ -197,18 +198,21 @@ def diagnose_case(case_dict: Dict[str, Any]) -> Dict[str, Any]:
                     if parsed:
                         parsed["parse_error"] = False
                         parsed["ai_mode"] = f"Gemini ({m_name})"
+                        parsed["quota_exceeded"] = False
                         return parsed
                 except Exception as err:
                     err_str = str(err).lower()
                     if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:
-                        import time
-                        time.sleep(6)
+                        quota_hit = True
                     continue
-        except Exception:
-            pass
+        except Exception as err:
+            err_str = str(err).lower()
+            if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:
+                quota_hit = True
 
-    # 3. Fallback Offline Engine
-    return diagnose_offline_fallback(case_dict)
+        fallback = diagnose_offline_fallback(case_dict)
+        fallback["quota_exceeded"] = quota_hit
+        return fallback
 
 def diagnose_case_by_id(case_id: str, cases_csv_path: str = CASES_CSV_PATH) -> Dict[str, Any]:
     """
