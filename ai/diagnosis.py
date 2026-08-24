@@ -20,6 +20,8 @@ if not os.environ.get("GEMINI_API_KEY") and os.path.exists(".env"):
     except Exception:
         pass
 
+_DEFAULT_API_KEY = object()
+
 class AIDiagnosisEngine:
     """
     NetSage AI Diagnosis Engine.
@@ -35,8 +37,11 @@ class AIDiagnosisEngine:
         "next_command", "fix_steps", "osi_layer", "concept"
     }
 
-    def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
+    def __init__(self, api_key: Any = _DEFAULT_API_KEY):
+        if api_key is _DEFAULT_API_KEY:
+            self.api_key = os.environ.get("GEMINI_API_KEY")
+        else:
+            self.api_key = api_key
 
     @staticmethod
     def normalize_keys(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -189,77 +194,63 @@ Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
             target_switch = switches[0] if switches else primary_dev
             target_switch2 = switches[1] if len(switches) > 1 else target_switch
 
-            if "show interfaces trunk" not in show_low:
-                return (
-                    target_switch,
-                    "show interfaces trunk",
-                    f"First, inspect trunk link configuration and allowed VLAN lists on {target_switch}."
-                )
-            elif "show vlan" not in show_low:
-                return (
-                    target_switch2,
-                    "show vlan brief",
-                    f"Next, check whether required VLANs are created in the VLAN database on {target_switch2}."
-                )
-            else:
-                return (
-                    target_switch,
-                    "show running-config",
-                    f"Inspect interface running configuration on {target_switch} to verify switchport settings."
-                )
+            # Ordered checklist — each command tried once, then move on
+            checklist = [
+                (target_switch, "show interfaces trunk",
+                 f"First, inspect trunk link configuration and allowed VLAN lists on {target_switch}."),
+                (target_switch2, "show vlan brief",
+                 f"Next, check whether required VLANs are created in the VLAN database on {target_switch2}."),
+                (target_switch, "show running-config",
+                 f"Inspect interface running configuration on {target_switch} to verify switchport settings."),
+                (target_switch2, "show mac address-table",
+                 f"Verify MAC address learning and port assignment on {target_switch2}."),
+            ]
+            for dev, cmd, reason in checklist:
+                if cmd not in show_low:
+                    return (dev, cmd, reason)
+            # Checklist exhausted — signal caller to stop, don't repeat anything
+            return ("", "", "")
 
         elif "route" in symptom_low or "ping" in symptom_low or "gateway" in symptom_low or "server" in symptom_low:
-            if "show ip route" not in show_low:
-                return (
-                    primary_dev,
-                    "show ip route",
-                    f"First, verify whether {primary_dev} has a valid route to the destination network."
-                )
-            elif "show ip interface brief" not in show_low:
-                return (
-                    primary_dev,
-                    "show ip interface brief",
-                    f"Next, verify physical and logical router interface operational status on {primary_dev}."
-                )
-            else:
-                return (
-                    primary_dev,
-                    "show running-config",
-                    f"Inspect global running configuration on {primary_dev} to check routing protocol and ACL statements."
-                )
+            checklist = [
+                (primary_dev, "show ip route",
+                 f"First, verify whether {primary_dev} has a valid route to the destination network."),
+                (primary_dev, "show ip interface brief",
+                 f"Next, verify physical and logical router interface operational status on {primary_dev}."),
+                (primary_dev, "show running-config",
+                 f"Inspect global running configuration on {primary_dev} to check routing protocol and ACL statements."),
+                (primary_dev, "show access-lists",
+                 f"Check for ACL rules blocking traffic on {primary_dev}."),
+            ]
+            for dev, cmd, reason in checklist:
+                if cmd not in show_low:
+                    return (dev, cmd, reason)
+            return ("", "", "")
 
         elif "dhcp" in symptom_low or "ip address" in symptom_low:
-            if "show ip dhcp binding" not in show_low and routers:
-                return (
-                    primary_dev,
-                    "show ip dhcp binding",
-                    f"First, check active DHCP address leases on {primary_dev}."
-                )
-            else:
-                return (
-                    primary_dev,
-                    "show running-config",
-                    f"Inspect configuration settings on {primary_dev}."
-                )
+            checklist = [
+                (primary_dev, "show ip dhcp binding",
+                 f"First, check active DHCP address leases on {primary_dev}.") if routers else None,
+                (primary_dev, "show running-config",
+                 f"Inspect DHCP pool configuration on {primary_dev}."),
+            ]
+            checklist = [c for c in checklist if c]
+            for dev, cmd, reason in checklist:
+                if cmd not in show_low:
+                    return (dev, cmd, reason)
+            return ("", "", "")
 
-        if "show ip interface brief" not in show_low and routers:
-            return (
-                primary_dev,
-                "show ip interface brief",
-                f"First, verify interface status on {primary_dev}."
-            )
-        elif "show interfaces trunk" not in show_low and switches:
-            return (
-                secondary_dev,
-                "show interfaces trunk",
-                f"Next, inspect trunk links on {secondary_dev}."
-            )
-        else:
-            return (
-                primary_dev,
-                "show running-config",
-                f"Inspect running configuration on {primary_dev}."
-            )
+        # Generic fallback checklist for uncategorized symptoms
+        checklist = [
+            (primary_dev, "show ip interface brief", f"First, verify interface status on {primary_dev}.") if routers else None,
+            (secondary_dev, "show interfaces trunk", f"Next, inspect trunk links on {secondary_dev}.") if switches else None,
+            (primary_dev, "show running-config", f"Inspect running configuration on {primary_dev}."),
+        ]
+        checklist = [c for c in checklist if c]
+        for dev, cmd, reason in checklist:
+            if cmd not in show_low:
+                return (dev, cmd, reason)
+        return ("", "", "")
 
     def diagnose_offline(self, case_info: Dict[str, Any], rule_results: List[Dict[str, Any]]) -> Dict[str, Any]:
         failed_rules = [r for r in rule_results if r.get("status") == "FAIL"]
@@ -284,6 +275,12 @@ Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
             status = "NO_CONFIRMED_ISSUE"
             root_cause = "Insufficient CLI show command evidence supplied to pinpoint root cause."
             evidence = ["Initial diagnostic CLI output needed to begin investigation."]
+        elif not next_cmd:
+            # NEW: checklist exhausted, nothing left to try — stop instead of looping
+            confidence = "Low"
+            status = "NO_CONFIRMED_ISSUE"
+            root_cause = "Standard diagnostic commands exhausted without confirming a fault. Manual review recommended."
+            evidence = ["All standard diagnostic checks for this symptom category have been completed."]
         elif "request timed out" in show_outputs.lower() or "unreachable" in show_outputs.lower() or "none" in show_outputs.lower():
             confidence = "Medium"
             status = "NEED_MORE_EVIDENCE"

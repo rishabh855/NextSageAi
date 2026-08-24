@@ -1,0 +1,82 @@
+{
+  "session_id": "SESSION-20260824-232621",
+  "timestamp": "2026-08-24 23:26:21",
+  "symptom": "PC0 cannot communicate with PC1 even though both devices are connected to the network.",
+  "topology": "PC0 \u2192 Switch0 \u2192 Switch1 \u2192 PC1",
+  "case_id": "",
+  "network_inventory": {
+    "end_devices_count": 2,
+    "switches_count": 2,
+    "routers_count": 0,
+    "wireless_count": 0,
+    "end_devices": [
+      "PC0",
+      "PC1"
+    ],
+    "switches": [
+      "Switch0",
+      "Switch1"
+    ],
+    "routers": [],
+    "wireless": []
+  },
+  "investigation_status": "STOPPED",
+  "current_step": 3,
+  "investigation_state": "ISSUE_CONFIRMED",
+  "current_device": "",
+  "current_command": "",
+  "reason_for_command": "Investigation stopped. Issue confirmed.",
+  "evidence_list": [
+    {
+      "entry_id": "EV-001",
+      "timestamp": "2026-08-24 23:26:37",
+      "command": "show ip interface brief",
+      "device": "Router0",
+      "file_name": "evidence_001.txt",
+      "raw_output": "Interface              IP-Address      OK? Method Status                Protocol \nFastEthernet0/1        unassigned      YES manual up                    up \nFastEthernet0/2        unassigned      YES manual up                    up \nFastEthernet0/3        unassigned      YES manual down                  down \nFastEthernet0/4        unassigned      YES manual down                  down \nFastEthernet0/5        unassigned      YES manual down                  down \nFastEthernet0/6        unassigned      YES manual down                  down \nFastEthernet0/7        unassigned      YES manual down                  down \nFastEthernet0/8        unassigned      YES manual down                  down \nFastEthernet0/9        unassigned      YES manual down                  down \nFastEthernet0/10       unassigned      YES manual down                  down \nFastEthernet0/11       unassigned      YES manual down                  down \nFastEthernet0/12       unassigned      YES manual down                  down \nFastEthernet0/13       unassigned      YES manual down                  down \nFastEthernet0/14       unassigned      YES manual down                  down \nFastEthernet0/15       unassigned      YES manual down                  down \nFastEthernet0/16       unassigned      YES manual down                  down \nFastEthernet0/17       unassigned      YES manual down                  down \nFastEthernet0/18       unassigned      YES manual down                  down \nFastEthernet0/19       unassigned      YES manual down                  down \nFastEthernet0/20       unassigned      YES manual down                  down \nFastEthernet0/21       unassigned      YES manual down                  down"
+    },
+    {
+      "entry_id": "EV-002",
+      "timestamp": "2026-08-24 23:27:02",
+      "command": "show interfaces trunk",
+      "device": "Switch0",
+      "file_name": "evidence_002.txt",
+      "raw_output": "Port        Mode         Encapsulation  Status        Native vlan\nFa0/2       on           802.1q         trunking      1\n\nPort        Vlans allowed on trunk\nFa0/2       10\n\nPort        Vlans allowed and active in management domain\nFa0/2       10\n\nPort        Vlans in spanning tree forwarding state and not pruned\nFa0/2       10"
+    },
+    {
+      "entry_id": "EV-003",
+      "timestamp": "2026-08-24 23:27:14",
+      "command": "show vlan brief",
+      "device": "Switch1",
+      "file_name": "evidence_003.txt",
+      "raw_output": "Port        Mode         Encapsulation  Status        Native vlan\nFa0/1       on           802.1q         trunking      1\n\nPort        Vlans allowed on trunk\nFa0/1       20\n\nPort        Vlans allowed and active in management domain\nFa0/1       none\n\nPort        Vlans in spanning tree forwarding state and not pruned\nFa0/1       none"
+    }
+  ],
+  "diagnosis_history": [],
+  "investigation_history": [
+    {
+      "step": 1,
+      "device": "Router0",
+      "command": "show ip interface brief",
+      "reason": "First, verify interface operational status across network devices.",
+      "state": "NO_CONFIRMED_ISSUE",
+      "result_summary": "\u2705 No issue detected in this check."
+    },
+    {
+      "step": 2,
+      "device": "Switch0",
+      "command": "show interfaces trunk",
+      "reason": "First, inspect trunk link configuration and allowed VLAN lists on Switch0.",
+      "state": "NO_CONFIRMED_ISSUE",
+      "result_summary": "\u2705 No issue detected in this check."
+    },
+    {
+      "step": 3,
+      "device": "Switch1",
+      "command": "show vlan brief",
+      "reason": "Next, check whether required VLANs are created in the VLAN database on Switch1.",
+      "state": "ISSUE_CONFIRMED",
+      "result_summary": "\ud83d\udea8 Issue Confirmed: Rule check failure: VLAN trunking mismatch: VLAN 10 is allowed on Switch0 trunk but disallowed/missing on Switch1."
+    }
+  ]
+}

@@ -126,7 +126,7 @@ class TestAIDiagnosisEngine(unittest.TestCase):
         # Verify AI engine never claims to have applied a fix or run a live command
         self.assertNotIn("applied fix", res["root_cause"].lower())
         self.assertNotIn("modified packet tracer", res["root_cause"].lower())
-        self.assertIn(res["ai_mode"], ["Offline Demo", "Gemini LLM"])
+        self.assertTrue(res["ai_mode"].startswith("Gemini") or res["ai_mode"] == "Offline Demo")
 
 if __name__ == "__main__":
     unittest.main()
