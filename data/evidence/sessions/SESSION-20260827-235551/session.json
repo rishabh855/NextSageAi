@@ -1,0 +1,99 @@
+{
+  "session_id": "SESSION-20260827-235551",
+  "timestamp": "2026-08-27 23:55:51",
+  "symptom": "PC0 has a valid IP address but cannot communicate with devices outside its local network.",
+  "topology": "PC0 \u2192 Switch0 \u2192 Router0 PC1 \u2192 Switch0",
+  "case_id": "",
+  "network_inventory": {
+    "end_devices_count": 2,
+    "switches_count": 1,
+    "routers_count": 1,
+    "wireless_count": 0,
+    "end_devices": [
+      "PC0",
+      "PC1"
+    ],
+    "switches": [
+      "Switch0"
+    ],
+    "routers": [
+      "Router0"
+    ],
+    "wireless": []
+  },
+  "investigation_status": "STOPPED",
+  "current_step": 4,
+  "investigation_state": "ISSUE_CONFIRMED",
+  "current_device": "",
+  "current_command": "",
+  "reason_for_command": "Issue confirmed.",
+  "evidence_list": [
+    {
+      "entry_id": "EV-001",
+      "timestamp": "2026-08-27 23:56:30",
+      "command": "show interfaces trunk",
+      "device": "Router0",
+      "file_name": "evidence_001.txt",
+      "raw_output": "Port        Mode         Encapsulation  Status        Native vlan"
+    },
+    {
+      "entry_id": "EV-002",
+      "timestamp": "2026-08-28 00:00:47",
+      "command": "show interfaces trunk",
+      "device": "Switch0",
+      "file_name": "evidence_002.txt",
+      "raw_output": "Port        Mode         Encapsulation  Status        Native vlan\nFa0/1       on           802.1q         trunking      1\n\nPort        Vlans allowed on trunk\nFa0/1       1-1005\n\nPort        Vlans allowed and active in management domain\nFa0/1       1\n\nPort        Vlans in spanning tree forwarding state and not pruned\nFa0/1       1"
+    },
+    {
+      "entry_id": "EV-003",
+      "timestamp": "2026-08-28 00:01:29",
+      "command": "show vlan brief",
+      "device": "Switch0",
+      "file_name": "evidence_003.txt",
+      "raw_output": "VLAN Name                             Status    Ports\n---- -------------------------------- --------- -------------------------------\n1    default                          active    Fa0/2, Fa0/3, Fa0/4, Fa0/5\n                                                Fa0/6, Fa0/7, Fa0/8, Fa0/9\n                                                Fa0/10, Fa0/11, Fa0/12\n10   VLAN0010                         active\n20   VLAN0020                         active\n1002 fddi-default                     active\n1003 token-ring-default               active\n1004 fddinet-default                  active\n1005 trnet-default                    active"
+    },
+    {
+      "entry_id": "EV-004",
+      "timestamp": "2026-08-28 00:02:20",
+      "command": "ipconfig",
+      "device": "PC0",
+      "file_name": "evidence_004.txt",
+      "raw_output": "FastEthernet0 Connection:(default port)\n\n   Connection-specific DNS Suffix..:\n   Link-local IPv6 Address.........: FE80::201:C9FF:FE12:3456\n   IPv6 Address....................: ::\n   IPv4 Address....................: 10.0.1.100\n   Subnet Mask.....................: 255.255.255.0\n   Default Gateway.................: 10.0.1.254"
+    }
+  ],
+  "diagnosis_history": [],
+  "investigation_history": [
+    {
+      "step": 1,
+      "device": "Router0",
+      "command": "show interfaces trunk",
+      "reason": "First, verify interface operational status across network devices.",
+      "state": "NO_CONFIRMED_ISSUE",
+      "result_summary": "\u2705 No issue detected in this check."
+    },
+    {
+      "step": 2,
+      "device": "Switch0",
+      "command": "show interfaces trunk",
+      "reason": "Inspect trunk link configuration and allowed/native VLANs on Switch0.",
+      "state": "NO_CONFIRMED_ISSUE",
+      "result_summary": "\u2705 No issue detected in this check."
+    },
+    {
+      "step": 3,
+      "device": "Switch0",
+      "command": "show vlan brief",
+      "reason": "Inspect created VLANs in the VLAN database on Switch0.",
+      "state": "NO_CONFIRMED_ISSUE",
+      "result_summary": "\u2705 No issue detected in this check."
+    },
+    {
+      "step": 4,
+      "device": "PC0",
+      "command": "ipconfig",
+      "reason": "Verify host IP and VLAN assignment on PC0.",
+      "state": "ISSUE_CONFIRMED",
+      "result_summary": "\ud83d\udea8 Issue Confirmed: Rule check failure: Gateway Mismatch: Host default gateway is set to 10.0.1.254, but active router interface is 10.0.1.1."
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+--- [Switch0] show running-config ---
+hostname Switch0
+
+vlan 10
+ name USERS
+
+interface FastEthernet0/1
+ switchport mode access
+ switchport access vlan 10
+
+interface FastEthernet0/2
+ switchport mode trunk
+ switchport trunk native vlan 1
+ switchport trunk allowed vlan 10

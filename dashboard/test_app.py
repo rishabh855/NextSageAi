@@ -44,7 +44,7 @@ class TestDashboardApp(unittest.TestCase):
         case = get_case_by_id(self.df_cases, "C001")
         checker = RuleChecker()
         results = checker.run_all_checks(case["show_outputs"])
-        self.assertEqual(len(results), 6)
+        self.assertEqual(len(results), 12)
         # Verify trunk pruning failure captured for C001
         failed_checks = [r for r in results if r["status"] == "FAIL"]
         self.assertTrue(len(failed_checks) > 0)

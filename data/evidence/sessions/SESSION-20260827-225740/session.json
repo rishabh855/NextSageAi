@@ -1,0 +1,65 @@
+{
+  "session_id": "SESSION-20260827-225740",
+  "timestamp": "2026-08-27 22:57:40",
+  "symptom": "PC in VLAN 30 on Switch1 has no network access.",
+  "topology": "Switch0 (Fa0/1) trunk to Switch1 (Fa0/1). PC connected to Switch1 Fa0/8 in VLAN 30.",
+  "case_id": "C003",
+  "network_inventory": {
+    "end_devices_count": 2,
+    "switches_count": 2,
+    "routers_count": 0,
+    "wireless_count": 0,
+    "end_devices": [
+      "PC-A",
+      "PC-B"
+    ],
+    "switches": [
+      "Switch0",
+      "Switch1"
+    ],
+    "routers": [],
+    "wireless": []
+  },
+  "investigation_status": "ACTIVE",
+  "current_step": 1,
+  "investigation_state": "NO_CONFIRMED_ISSUE",
+  "current_device": "Switch0",
+  "current_command": "show interfaces trunk",
+  "reason_for_command": "First, verify interface operational status across network devices.",
+  "evidence_list": [
+    {
+      "entry_id": "EV-001",
+      "timestamp": "2026-08-27 22:57:40",
+      "command": "show interfaces trunk",
+      "device": "Switch0",
+      "file_name": "evidence_001.txt",
+      "raw_output": "Port        Mode         Encapsulation  Status        Native vlan\nFa0/1       on           802.1q         trunking      1"
+    },
+    {
+      "entry_id": "EV-002",
+      "timestamp": "2026-08-27 22:57:40",
+      "command": "show interfaces trunk",
+      "device": "Switch1",
+      "file_name": "evidence_002.txt",
+      "raw_output": "Port        Mode         Encapsulation  Status        Native vlan\nFa0/1       on           802.1q         trunking      1"
+    },
+    {
+      "entry_id": "EV-003",
+      "timestamp": "2026-08-27 22:57:40",
+      "command": "show vlan brief",
+      "device": "Switch0",
+      "file_name": "evidence_003.txt",
+      "raw_output": "VLAN Name                             Status    Ports\n---- -------------------------------- --------- -------------------------------\n1    default                          active    Fa0/1\n10   Sales                            active    Fa0/2\n20   HR                               active    Fa0/3\n30   GUESTS                           active    Fa0/8"
+    },
+    {
+      "entry_id": "EV-004",
+      "timestamp": "2026-08-27 22:57:40",
+      "command": "show vlan brief",
+      "device": "Switch1",
+      "file_name": "evidence_004.txt",
+      "raw_output": "VLAN Name                             Status    Ports\n---- -------------------------------- --------- -------------------------------\n1    default                          active    Fa0/1, Fa0/2, Fa0/3, Fa0/4\n10   Sales                            active    Fa0/6, Fa0/7\n20   HR                               active    Fa0/8"
+    }
+  ],
+  "diagnosis_history": [],
+  "investigation_history": []
+}

@@ -1,0 +1,7 @@
+--- [Switch0] show vlan brief ---
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+1    default                          active    Fa0/1
+10   Sales                            active    Fa0/2
+20   HR                               active    Fa0/3
+30   GUESTS                           active    Fa0/8

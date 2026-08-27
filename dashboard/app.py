@@ -257,7 +257,8 @@ def render_new_session_workflow(
                     "symptom": session_data.get("symptom", ""),
                     "topology_note": session_data.get("topology", ""),
                     "network_inventory": inv,
-                    "show_outputs": accumulated_evidence
+                    "show_outputs": accumulated_evidence,
+                    "investigation_history": session_data.get("investigation_history", [])
                 }
                 diag = engine.diagnose(session_case_info, rule_res)
                 st.session_state["session_rule_results"] = rule_res
@@ -284,20 +285,37 @@ def render_new_session_workflow(
                     )
                     st.warning("🟡 Possible issue detected — requesting follow-up evidence.")
                 else:
-                    session_mgr.update_investigation_state(
-                        session_id=active_session_id,
-                        state="NO_CONFIRMED_ISSUE",
-                        next_device=diag.get("next_device", current_device),
-                        next_command=diag.get("next_command", "show ip route"),
-                        reason_for_command=diag.get("reason_for_command", "No issue detected in check. Moving to next diagnostic check."),
-                        result_summary="✅ No issue detected in this check."
-                    )
-                    st.info("✅ No issue detected in check. Advancing to next diagnostic step.")
+                    next_cmd = diag.get("next_command", "")
+                    next_dev = diag.get("next_device", "")
+                    if not next_cmd:
+                        session_mgr.update_investigation_state(
+                            session_id=active_session_id,
+                            state="NO_CONFIRMED_ISSUE",
+                            next_device="",
+                            next_command="",
+                            reason_for_command="Standard diagnostic checks completed. No further commands remain. Manual review recommended.",
+                            result_summary="🛑 Standard diagnostic checks completed. No further commands remain.",
+                            investigation_status="STOPPED"
+                        )
+                        st.info("🛑 Standard diagnostic checks completed. No further commands remain. Manual review recommended.")
+                    else:
+                        session_mgr.update_investigation_state(
+                            session_id=active_session_id,
+                            state="NO_CONFIRMED_ISSUE",
+                            next_device=next_dev,
+                            next_command=next_cmd,
+                            reason_for_command=diag.get("reason_for_command", "No issue detected in check. Moving to next diagnostic check."),
+                            result_summary="✅ No issue detected in this check."
+                        )
+                        st.info("✅ No issue detected in check. Advancing to next diagnostic step.")
                 
                 st.rerun()
 
     else:
-        st.success("🛑 **Investigation Complete — Issue Confirmed**")
+        if session_data.get("investigation_state") == "ISSUE_CONFIRMED":
+            st.success("🛑 **Investigation Complete — Issue Confirmed**")
+        else:
+            st.info("🛑 **Standard diagnostic checks completed. No further commands remain. Manual review recommended.**")
 
     st.markdown("---")
 

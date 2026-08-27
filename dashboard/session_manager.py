@@ -78,18 +78,29 @@ class SessionManager:
         session_dir = os.path.join(self.base_dir, session_id)
         os.makedirs(session_dir, exist_ok=True)
 
+        # Dynamically infer device counts and names from topology text
+        combo_text = f"{symptom} {topology}"
+        has_router = bool(re.search(r"\b(Router|R1|R2|R3|L3SW|ISP|HQ|Branch)\b", combo_text, re.IGNORECASE))
+        has_switch = bool(re.search(r"\b(Switch|SW1|SW2|L2SW)\b", combo_text, re.IGNORECASE))
+
+        router_list = ["Router1"] if has_router else []
+        switch_list = ["Switch1", "Switch2"] if has_switch or not has_router else ["Switch1"]
+
         default_inventory = {
             "end_devices_count": 2,
-            "switches_count": 2,
-            "routers_count": 1,
+            "switches_count": len(switch_list),
+            "routers_count": len(router_list),
             "wireless_count": 0,
             "end_devices": ["PC0", "PC1"],
-            "switches": ["Switch0", "Switch1"],
-            "routers": ["Router0"],
+            "switches": switch_list,
+            "routers": router_list,
             "wireless": []
         }
         if inventory:
             default_inventory.update(inventory)
+
+        init_dev = (default_inventory.get("routers")[0] if default_inventory.get("routers")
+                    else (default_inventory.get("switches")[0] if default_inventory.get("switches") else "Switch1"))
 
         session_data = {
             "session_id": session_id,
@@ -101,8 +112,8 @@ class SessionManager:
             "investigation_status": "ACTIVE",
             "current_step": 1,
             "investigation_state": "NO_CONFIRMED_ISSUE",
-            "current_device": default_inventory["routers"][0] if default_inventory.get("routers") else "Router0",
-            "current_command": "show ip interface brief",
+            "current_device": init_dev,
+            "current_command": "show ip interface brief" if has_router else "show interfaces trunk",
             "reason_for_command": "First, verify interface operational status across network devices.",
             "evidence_list": [],
             "diagnosis_history": [],
@@ -223,19 +234,19 @@ class SessionManager:
         }
 
         history = session_data.setdefault("investigation_history", [])
-        # Avoid duplicate history entries for same step
-        history = [h for h in history if h.get("step") != current_step]
+        # Prevent duplicate history entries for same step or same (device, command) pair
+        history = [h for h in history if h.get("step") != current_step and (str(h.get("device")).lower(), str(h.get("command")).lower()) != (prev_dev.lower(), prev_cmd.lower())]
         history.append(step_history_entry)
         session_data["investigation_history"] = history
 
         session_data["investigation_state"] = state
         session_data["investigation_status"] = investigation_status
 
-        if state == "ISSUE_CONFIRMED" or investigation_status == "STOPPED":
+        if state == "ISSUE_CONFIRMED" or investigation_status == "STOPPED" or not next_command:
             session_data["investigation_status"] = "STOPPED"
             session_data["current_command"] = ""
             session_data["current_device"] = ""
-            session_data["reason_for_command"] = "Investigation stopped. Issue confirmed."
+            session_data["reason_for_command"] = reason_for_command or ("Issue confirmed." if state == "ISSUE_CONFIRMED" else "Standard diagnostic checks completed. No further commands remain. Manual review recommended.")
         else:
             session_data["current_step"] = current_step + 1
             if next_device:

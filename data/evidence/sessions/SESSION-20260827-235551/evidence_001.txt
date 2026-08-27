@@ -1,0 +1,2 @@
+--- [Router0] show interfaces trunk ---
+Port        Mode         Encapsulation  Status        Native vlan

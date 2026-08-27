@@ -1,0 +1,22 @@
+--- [PC0] ipconfig /all ---
+Windows IP Configuration
+
+   Host Name . . . . . . . . . . . . : PC0
+   Primary Dns Suffix  . . . . . . . :
+   Node Type . . . . . . . . . . . . : Broadcast
+   IP Routing Enabled. . . . . . . . : No
+   WINS Proxy Enabled. . . . . . . . : No
+
+Ethernet adapter FastEthernet0:
+
+   Connection-specific DNS Suffix  . :
+   Description . . . . . . . . . . . : FastEthernet0
+   Physical Address. . . . . . . . . : 00D0.97AA.0001
+   DHCP Enabled. . . . . . . . . . . : Yes
+   Autoconfiguration Enabled . . . . : Yes
+
+   Autoconfiguration IPv4 Address. . : 169.254.100.25
+   Subnet Mask . . . . . . . . . . . : 255.255.0.0
+   Default Gateway . . . . . . . . . :
+   DHCP Server . . . . . . . . . . . :
+   DNS Servers . . . . . . . . . . . :

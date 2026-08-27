@@ -1,0 +1,9 @@
+--- [PC0] ipconfig ---
+FastEthernet0 Connection:(default port)
+
+   Connection-specific DNS Suffix..:
+   Link-local IPv6 Address.........: FE80::2D0:BCFF:FE12:3456
+   IPv6 Address....................: ::
+   IPv4 Address....................: 169.254.10.25
+   Subnet Mask.....................: 255.255.0.0
+   Default Gateway.................: 0.0.0.0

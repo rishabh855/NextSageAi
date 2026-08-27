@@ -1,2 +1,5 @@
 log_id,case_id,timestamp,before_status,after_status,verification_result,verification_notes
 VERIF-001,C001,2026-08-20 19:57:53,FAIL,PASS,RESOLVED,"Before fix, PC0 could not ping PC1 because VLAN 10 was not permitted on Switch1 FastEthernet0/1. After changing the trunk allowed VLAN to 10, PC0 successfully pinged 192.168.10.20."
+VERIF-002,SESSION-20260827-222848,2026-08-27 22:30:45,FAIL,PASS,RESOLVED,"Verified by comparing trunk configuration evidence from both switches. Switch0 reported Native VLAN 1, while Switch1 reported Native VLAN 10. The deterministic Native VLAN Mismatch Check detected the inconsistency and confirmed the root cause. Investigation stopped after confirmation."
+VERIF-003,SESSION-20260827-230420,2026-08-27 23:06:51,FAIL,PASS,RESOLVED,done
+VERIF-004,SESSION-20260827-235551,2026-08-28 00:05:53,FAIL,PASS,RESOLVED,//

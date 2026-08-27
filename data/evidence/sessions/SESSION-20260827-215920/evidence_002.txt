@@ -1,0 +1,13 @@
+--- [Switch1] show vlan brief ---
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+1    default                          active    Fa0/1, Fa0/3, Fa0/4, Fa0/5
+10   USERS                            active
+
+Switch2#show interfaces trunk
+
+Port        Mode         Encapsulation  Status        Native vlan
+Fa0/2       on           802.1q         trunking      10
+
+Port        Vlans allowed on trunk
+Fa0/2       10

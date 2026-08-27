@@ -76,7 +76,46 @@ class TestRuleChecker(unittest.TestCase):
         VLAN 10 active
         """
         results = self.checker.run_all_checks(clean_evidence)
-        self.assertEqual(len(results), 6)
+        self.assertEqual(len(results), 12)
+
+    def test_exact_packet_tracer_c002_native_vlan_mismatch(self):
+        evidence = """
+--- [Switch0] show interfaces trunk ---
+Switch#show interfaces trunk
+Port        Mode         Encapsulation  Status        Native vlan
+Fa0/1       on           802.1q         trunking      1
+
+Port        Vlans allowed on trunk
+Fa0/1       1-1005
+
+--- [Switch1] show interfaces trunk ---
+Switch#show interfaces trunk
+Port        Mode         Encapsulation  Status        Native vlan
+Fa0/1       on           802.1q         trunking      10
+
+Port        Vlans allowed on trunk
+Fa0/1       1-1005
+"""
+        res = self.checker.check_native_vlan_mismatch(evidence)
+        self.assertEqual(res["status"], "FAIL")
+        self.assertIn("Native VLAN mismatch", res["details"])
+
+        rule_results = self.checker.run_all_checks(evidence)
+        failed_rules = [r for r in rule_results if r["status"] == "FAIL"]
+        self.assertTrue(len(failed_rules) > 0)
+
+        from ai.diagnosis import AIDiagnosisEngine
+        engine = AIDiagnosisEngine(api_key=None)
+        case_info = {
+            "case_id": "C002",
+            "symptom": "PC-1 in VLAN 20 is unable to reach gateway. Native VLAN mismatch reported.",
+            "topology_note": "Switch0 Fa0/1 trunk to Switch1 Fa0/1",
+            "show_outputs": evidence
+        }
+        diag = engine.diagnose(case_info, rule_results)
+        self.assertEqual(diag["status"], "ISSUE_CONFIRMED")
+        self.assertEqual(diag["confidence"], "High")
+        self.assertIn("Native VLAN mismatch", diag["root_cause"])
 
 if __name__ == "__main__":
     unittest.main()

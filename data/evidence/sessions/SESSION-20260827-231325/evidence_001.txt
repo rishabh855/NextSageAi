@@ -1,0 +1,4 @@
+--- [PC0] ipconfig ---
+IPv4 Address. . . . . . . . . . . : 10.0.1.100
+Subnet Mask . . . . . . . . . . . : 255.255.255.0
+Default Gateway . . . . . . . . . : 10.0.1.254

@@ -264,5 +264,206 @@ class TestGuidedInvestigation(unittest.TestCase):
         self.assertEqual(loaded["investigation_status"], "ACTIVE")
         self.assertEqual(loaded["current_step"], 1)
 
+    def test_c002_guided_investigation_and_native_vlan_mismatch(self):
+        inventory = {
+            "end_devices_count": 2, "switches_count": 2, "routers_count": 0, "wireless_count": 0,
+            "end_devices": ["PC-1", "PC-2"], "switches": ["Switch0", "Switch1"], "routers": [], "wireless": []
+        }
+        sess = self.sm.create_session(
+            symptom="PC-1 in VLAN 20 is unable to obtain traffic or reach gateway. Switch logs report native VLAN mismatch.",
+            topology="Switch0 (Gi0/1) trunk to Switch1 (Gi0/1). Native VLAN mismatch between switches.",
+            case_id="C002",
+            inventory=inventory
+        )
+        session_id = sess["session_id"]
+        engine = AIDiagnosisEngine(api_key=None)
+
+        # Step 1: Submit Switch0 show interfaces trunk
+        sw0_cli = """
+--- Switch0 show interfaces trunk ---
+Port        Mode         Encapsulation  Status        Native vlan
+Gi0/1       on           802.1q         trunking      1
+Port        Vlans allowed on trunk
+Gi0/1       1-4094
+"""
+        self.sm.add_evidence(session_id, sw0_cli, "show interfaces trunk", "Switch0")
+        accumulated1 = self.sm.get_accumulated_evidence(session_id)
+        hist1 = self.sm.get_session(session_id).get("investigation_history", [])
+        case_info1 = {
+            "symptom": sess["symptom"],
+            "topology_note": sess["topology"],
+            "show_outputs": accumulated1,
+            "investigation_history": hist1,
+            "network_inventory": inventory
+        }
+        diag1 = engine.diagnose(case_info1, [])
+        self.assertEqual(diag1["next_device"], "Switch1")
+        self.assertEqual(diag1["next_command"], "show interfaces trunk")
+
+        self.sm.update_investigation_state(
+            session_id=session_id,
+            state="NO_CONFIRMED_ISSUE",
+            next_device=diag1["next_device"],
+            next_command=diag1["next_command"]
+        )
+
+        # Step 2: Submit Switch1 show interfaces trunk with Native VLAN 10 (mismatch)
+        sw1_cli = """
+%CDP-4-NATIVE_VLAN_MISMATCH: Native VLAN mismatch discovered on GigabitEthernet0/1 (10), with Switch0 GigabitEthernet0/1 (1).
+--- Switch1 show interfaces trunk ---
+Port        Mode         Encapsulation  Status        Native vlan
+Gi0/1       on           802.1q         trunking      10
+"""
+        self.sm.add_evidence(session_id, sw1_cli, "show interfaces trunk", "Switch1")
+        accumulated2 = self.sm.get_accumulated_evidence(session_id)
+        checker = RuleChecker()
+        rule_res = checker.run_all_checks(accumulated2)
+        hist2 = self.sm.get_session(session_id).get("investigation_history", [])
+        case_info2 = {
+            "symptom": sess["symptom"],
+            "topology_note": sess["topology"],
+            "show_outputs": accumulated2,
+            "investigation_history": hist2,
+            "network_inventory": inventory
+        }
+        diag2 = engine.diagnose(case_info2, rule_res)
+
+        self.assertEqual(diag2["status"], "ISSUE_CONFIRMED")
+        self.assertEqual(diag2["confidence"], "High")
+        self.assertIn("Native VLAN mismatch", diag2["root_cause"])
+
+        updated_sess = self.sm.update_investigation_state(
+            session_id=session_id,
+            state="ISSUE_CONFIRMED",
+            result_summary=diag2["root_cause"],
+            investigation_status="STOPPED"
+        )
+        self.assertEqual(updated_sess["investigation_status"], "STOPPED")
+
+    def test_no_command_repetition_and_exhaustion(self):
+        engine = AIDiagnosisEngine(api_key=None)
+        history = [
+            {"device": "Switch0", "command": "show interfaces trunk"},
+            {"device": "Switch1", "command": "show interfaces trunk"},
+            {"device": "Switch0", "command": "show vlan brief"},
+            {"device": "Switch1", "command": "show vlan brief"},
+            {"device": "Switch0", "command": "show running-config"},
+            {"device": "Switch1", "command": "show running-config"},
+        ]
+        case_info = {
+            "symptom": "VLAN trunking issue",
+            "topology_note": "Switch0 -> Switch1",
+            "show_outputs": "All configs look normal.",
+            "network_inventory": {"switches_count": 2, "switches": ["Switch0", "Switch1"], "routers_count": 0, "routers": []},
+            "investigation_history": history
+        }
+        diag = engine.diagnose(case_info, [])
+        self.assertEqual(diag["next_command"], "")
+        self.assertEqual(diag["next_device"], "")
+        self.assertIn("Standard diagnostic checks completed", diag["root_cause"])
+
+    def test_c003_guided_investigation_4_step_missing_vlan_detection(self):
+        inventory = {
+            "end_devices": ["PC-A", "PC-B"], "switches": ["Switch0", "Switch1"], "routers": [], "wireless": []
+        }
+        sess = self.sm.create_session(
+            symptom="PC connected to Switch1 Fa0/5 has no network access and fails all pings.",
+            topology="Host PC (192.168.30.15/24) connected to Switch1 Fa0/5, configured for VLAN 30.",
+            case_id="C003",
+            inventory=inventory
+        )
+        session_id = sess["session_id"]
+        engine = AIDiagnosisEngine(api_key=None)
+        checker = RuleChecker()
+
+        # Step 1: Switch0 show interfaces trunk
+        sm0 = "Port Mode Encapsulation Status Native vlan\nFa0/1 on 802.1q trunking 1\n"
+        self.sm.add_evidence(session_id, sm0, "show interfaces trunk", "Switch0")
+
+        # Step 2: Switch1 show interfaces trunk
+        sm1 = "Port Mode Encapsulation Status Native vlan\nFa0/1 on 802.1q trunking 1\n"
+        self.sm.add_evidence(session_id, sm1, "show interfaces trunk", "Switch1")
+
+        # Step 3: Switch0 show vlan brief (VLAN 30 present)
+        sw0_vlan = "1 default active Fa0/1\n10 Sales active Fa0/2\n20 HR active Fa0/3\n30 GUESTS active Fa0/8\n"
+        self.sm.add_evidence(session_id, sw0_vlan, "show vlan brief", "Switch0")
+
+        # Step 4: Switch1 show vlan brief (VLAN 30 ABSENT)
+        sw1_vlan = "1 default active Fa0/1, Fa0/2, Fa0/3, Fa0/4\n10 Sales active Fa0/6, Fa0/7\n20 HR active Fa0/8\n"
+        self.sm.add_evidence(session_id, sw1_vlan, "show vlan brief", "Switch1")
+
+        accumulated = self.sm.get_accumulated_evidence(session_id)
+        rule_results = checker.run_all_checks(accumulated)
+
+        hist = self.sm.get_session(session_id).get("investigation_history", [])
+        case_info = {
+            "case_id": "C003",
+            "symptom": sess["symptom"],
+            "topology_note": sess["topology"],
+            "show_outputs": accumulated,
+            "investigation_history": hist,
+            "network_inventory": inventory
+        }
+
+        diag = engine.diagnose(case_info, rule_results)
+        self.assertEqual(diag["status"], "ISSUE_CONFIRMED")
+        self.assertEqual(diag["confidence"], "High")
+        self.assertIn("VLAN 30", diag["root_cause"])
+        self.assertIn("missing from", diag["root_cause"])
+
+    def test_c007_guided_investigation_and_gateway_mismatch(self):
+        inventory = {
+            "end_devices": ["PC0", "PC1"], "switches": ["Switch0"], "routers": ["Router0"]
+        }
+        sess = self.sm.create_session(
+            symptom="PC0 in VLAN 1 is unable to ping gateway or external network.",
+            topology="PC0 (10.0.1.100/24) -> Switch0 -> Router0 (Gi0/0 10.0.1.1/24)",
+            case_id="C007",
+            inventory=inventory
+        )
+        session_id = sess["session_id"]
+        engine = AIDiagnosisEngine(api_key=None)
+        checker = RuleChecker()
+
+        # Initial recommendation MUST select PC0 -> ipconfig
+        case_info0 = {
+            "case_id": "C007",
+            "symptom": sess["symptom"],
+            "topology_note": sess["topology"],
+            "show_outputs": "",
+            "investigation_history": [],
+            "network_inventory": inventory
+        }
+        diag0 = engine.diagnose(case_info0, [])
+        self.assertEqual(diag0["next_device"], "PC0")
+        self.assertEqual(diag0["next_command"], "ipconfig")
+
+        # Step 1: PC0 ipconfig
+        pc0_cli = "IPv4 Address: 10.0.1.100\nSubnet Mask: 255.255.255.0\nDefault Gateway: 10.0.1.254\n"
+        self.sm.add_evidence(session_id, pc0_cli, "ipconfig", "PC0")
+
+        # Step 2: Router0 show ip interface brief
+        rtr_cli = "GigabitEthernet0/0 10.0.1.1 YES manual up up\n"
+        self.sm.add_evidence(session_id, rtr_cli, "show ip interface brief", "Router0")
+
+        accumulated = self.sm.get_accumulated_evidence(session_id)
+        rule_results = checker.run_all_checks(accumulated)
+
+        hist = self.sm.get_session(session_id).get("investigation_history", [])
+        case_info2 = {
+            "case_id": "C007",
+            "symptom": sess["symptom"],
+            "topology_note": sess["topology"],
+            "show_outputs": accumulated,
+            "investigation_history": hist,
+            "network_inventory": inventory
+        }
+
+        diag2 = engine.diagnose(case_info2, rule_results)
+        self.assertEqual(diag2["status"], "ISSUE_CONFIRMED")
+        self.assertEqual(diag2["confidence"], "High")
+        self.assertIn("gateway", diag2["root_cause"].lower())
+        self.assertIn("mismatch", diag2["root_cause"].lower())
+
 if __name__ == "__main__":
     unittest.main()

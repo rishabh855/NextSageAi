@@ -1,0 +1,66 @@
+{
+  "session_id": "SESSION-20260827-223341",
+  "timestamp": "2026-08-27 22:33:41",
+  "symptom": "Devices assigned to VLAN 30 are unable to communicate properly across the network.",
+  "topology": "",
+  "case_id": "",
+  "network_inventory": {
+    "end_devices_count": 2,
+    "switches_count": 2,
+    "routers_count": 0,
+    "wireless_count": 0,
+    "end_devices": [
+      "PC0",
+      "PC1"
+    ],
+    "switches": [
+      "Switch0",
+      "Switch1"
+    ],
+    "routers": [],
+    "wireless": []
+  },
+  "investigation_status": "STOPPED",
+  "current_step": 2,
+  "investigation_state": "ISSUE_CONFIRMED",
+  "current_device": "",
+  "current_command": "",
+  "reason_for_command": "Issue confirmed.",
+  "evidence_list": [
+    {
+      "entry_id": "EV-001",
+      "timestamp": "2026-08-27 22:34:48",
+      "command": "show interfaces trunk",
+      "device": "Switch0",
+      "file_name": "evidence_001.txt",
+      "raw_output": "Port        Mode         Encapsulation  Status        Native vlan\nFa0/2       on           802.1q         trunking      1\n\nPort        Vlans allowed on trunk\nFa0/2       1-1005\n\nPort        Vlans allowed and active in management domain\nFa0/2       1,10,20,30\n\nPort        Vlans in spanning tree forwarding state and not pruned\nFa0/2       1,10,20,30"
+    },
+    {
+      "entry_id": "EV-002",
+      "timestamp": "2026-08-27 22:36:47",
+      "command": "show interfaces trunk",
+      "device": "Switch1",
+      "file_name": "evidence_002.txt",
+      "raw_output": "Port        Mode         Encapsulation  Status        Native vlan\nFa0/2       on           802.1q         trunking      1\n\nPort        Vlans allowed on trunk\nFa0/2       1-1005\n\nPort        Vlans allowed and active in management domain\nFa0/2       1,10,20\n\nPort        Vlans in spanning tree forwarding state and not pruned\nFa0/2       1,10,20"
+    }
+  ],
+  "diagnosis_history": [],
+  "investigation_history": [
+    {
+      "step": 1,
+      "device": "Switch0",
+      "command": "show interfaces trunk",
+      "reason": "First, verify interface operational status across network devices.",
+      "state": "NO_CONFIRMED_ISSUE",
+      "result_summary": "\u2705 No issue detected in this check."
+    },
+    {
+      "step": 2,
+      "device": "Switch1",
+      "command": "show interfaces trunk",
+      "reason": "Next, inspect trunk link configuration and allowed/native VLANs on Switch1 to compare both ends.",
+      "state": "ISSUE_CONFIRMED",
+      "result_summary": "\ud83d\udea8 Issue Confirmed: Rule check failure: VLAN pruning mismatch: VLAN 30 active on Switch0 trunk but not allowed/active on Switch1."
+    }
+  ]
+}

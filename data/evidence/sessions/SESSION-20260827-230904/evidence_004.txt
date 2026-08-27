@@ -1,0 +1,18 @@
+--- [Router0] show running-config ---
+Building configuration...
+
+Current configuration : 820 bytes
+
+hostname Router0
+
+interface GigabitEthernet0/0
+ ip address 10.0.1.1 255.255.255.0
+ no shutdown
+
+interface GigabitEthernet0/1
+ ip address 192.168.1.1 255.255.255.0
+ no shutdown
+
+ip route 0.0.0.0 0.0.0.0 10.0.1.254
+
+end

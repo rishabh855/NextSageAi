@@ -1,0 +1,99 @@
+{
+  "session_id": "SESSION-20260827-230904",
+  "timestamp": "2026-08-27 23:09:04",
+  "symptom": "PC0 cannot communicate with devices outside its local network.",
+  "topology": "",
+  "case_id": "",
+  "network_inventory": {
+    "end_devices_count": 2,
+    "switches_count": 1,
+    "routers_count": 1,
+    "wireless_count": 0,
+    "end_devices": [
+      "PC0",
+      "PC1"
+    ],
+    "switches": [
+      "Switch0"
+    ],
+    "routers": [
+      "Router0"
+    ],
+    "wireless": []
+  },
+  "investigation_status": "STOPPED",
+  "current_step": 4,
+  "investigation_state": "NO_CONFIRMED_ISSUE",
+  "current_device": "",
+  "current_command": "",
+  "reason_for_command": "Standard diagnostic checks completed. No further commands remain. Manual review recommended.",
+  "evidence_list": [
+    {
+      "entry_id": "EV-001",
+      "timestamp": "2026-08-27 23:09:37",
+      "command": "show interfaces trunk",
+      "device": "Router0",
+      "file_name": "evidence_001.txt",
+      "raw_output": "% Invalid input detected at '^' marker."
+    },
+    {
+      "entry_id": "EV-002",
+      "timestamp": "2026-08-27 23:10:22",
+      "command": "show ip interface brief",
+      "device": "Router0",
+      "file_name": "evidence_002.txt",
+      "raw_output": "Interface              IP-Address      OK? Method Status                Protocol\nGigabitEthernet0/0     10.0.1.1        YES manual up                    up\nGigabitEthernet0/1     192.168.1.1     YES manual up                    up\nVlan1                  unassigned      YES unset  administratively down down"
+    },
+    {
+      "entry_id": "EV-003",
+      "timestamp": "2026-08-27 23:10:52",
+      "command": "show interfaces trunk",
+      "device": "Switch0",
+      "file_name": "evidence_003.txt",
+      "raw_output": "Port        Mode         Encapsulation  Status        Native vlan\nGi0/1       on           802.1q         trunking      1\n\nPort        Vlans allowed on trunk\nGi0/1       1-1005\n\nPort        Vlans allowed and active in management domain\nGi0/1       1\n\nPort        Vlans in spanning tree forwarding state and not pruned\nGi0/1       1"
+    },
+    {
+      "entry_id": "EV-004",
+      "timestamp": "2026-08-27 23:11:22",
+      "command": "show running-config",
+      "device": "Router0",
+      "file_name": "evidence_004.txt",
+      "raw_output": "Building configuration...\n\nCurrent configuration : 820 bytes\n\nhostname Router0\n\ninterface GigabitEthernet0/0\n ip address 10.0.1.1 255.255.255.0\n no shutdown\n\ninterface GigabitEthernet0/1\n ip address 192.168.1.1 255.255.255.0\n no shutdown\n\nip route 0.0.0.0 0.0.0.0 10.0.1.254\n\nend"
+    }
+  ],
+  "diagnosis_history": [],
+  "investigation_history": [
+    {
+      "step": 1,
+      "device": "Router0",
+      "command": "show interfaces trunk",
+      "reason": "First, verify interface operational status across network devices.",
+      "state": "NO_CONFIRMED_ISSUE",
+      "result_summary": "\u2705 No issue detected in this check."
+    },
+    {
+      "step": 2,
+      "device": "Router0",
+      "command": "show ip interface brief",
+      "reason": "First, verify interface status on Router0.",
+      "state": "NO_CONFIRMED_ISSUE",
+      "result_summary": "\u2705 No issue detected in this check."
+    },
+    {
+      "step": 3,
+      "device": "Switch0",
+      "command": "show interfaces trunk",
+      "reason": "Next, inspect trunk links on Switch0.",
+      "state": "NO_CONFIRMED_ISSUE",
+      "result_summary": "\u2705 No issue detected in this check."
+    },
+    {
+      "step": 4,
+      "device": "Router0",
+      "command": "show running-config",
+      "reason": "Inspect running configuration on Router0.",
+      "state": "NO_CONFIRMED_ISSUE",
+      "result_summary": "\ud83d\uded1 Standard diagnostic checks completed. No further commands remain."
+    }
+  ]
+}
