@@ -556,12 +556,12 @@ def render_case_explorer_workflow(
     col_btn1, col_btn2 = st.columns(2)
 
     with col_btn1:
-        if st.button("⚙️ Run Deterministic Rule Checker", use_container_width=True):
+        if st.button("⚙️ Run Deterministic Rule Checker", width="stretch"):
             checker = RuleChecker()
             st.session_state["rule_results"] = checker.run_all_checks(show_output)
 
     with col_btn2:
-        if st.button("🤖 Run AI Diagnosis Engine", use_container_width=True):
+        if st.button("🤖 Run AI Diagnosis Engine", width="stretch"):
             with st.spinner("Analyzing case evidence with AI Engine..."):
                 engine = AIDiagnosisEngine()
                 st.session_state["ai_diagnosis"] = engine.diagnose(
@@ -769,19 +769,19 @@ def render_analytics_dashboard(df_cases: pd.DataFrame, df_reviews: pd.DataFrame,
     if cat_counts:
         df_cat = pd.DataFrame(list(cat_counts.items()), columns=["Category", "Cases"])
         fig_cat = px.bar(df_cat, x="Category", y="Cases", color="Category", title="Cases by Fault Category")
-        c_col1.plotly_chart(fig_cat, use_container_width=True)
+        c_col1.plotly_chart(fig_cat, width="stretch")
 
     sev_counts = AnalyticsManager.get_severity_counts(df_cases)
     if sev_counts:
         df_sev = pd.DataFrame(list(sev_counts.items()), columns=["Severity", "Cases"])
         fig_sev = px.pie(df_sev, names="Severity", values="Cases", title="Cases by Severity Level", hole=0.4)
-        c_col2.plotly_chart(fig_sev, use_container_width=True)
+        c_col2.plotly_chart(fig_sev, width="stretch")
 
     osi_counts = AnalyticsManager.get_osi_layer_counts(df_cases)
     if osi_counts:
         df_osi = pd.DataFrame(list(osi_counts.items()), columns=["OSI Layer", "Cases"])
         fig_osi = px.bar(df_osi, x="OSI Layer", y="Cases", color="OSI Layer", title="Cases by OSI Layer")
-        c_col3.plotly_chart(fig_osi, use_container_width=True)
+        c_col3.plotly_chart(fig_osi, width="stretch")
 
     st.markdown("---")
 
@@ -799,12 +799,12 @@ def render_analytics_dashboard(df_cases: pd.DataFrame, df_reviews: pd.DataFrame,
             color_discrete_map={"Accept": "#2ecc71", "Edit": "#f39c12", "Reject": "#e74c3c"},
             title="Human Review Decision Breakdown (Accept vs Edit vs Reject)"
         )
-        r_col1.plotly_chart(fig_dec, use_container_width=True)
+        r_col1.plotly_chart(fig_dec, width="stretch")
 
         conf_counts = AnalyticsManager.get_confidence_counts(df_reviews)
         df_conf = pd.DataFrame(list(conf_counts.items()), columns=["AI Confidence", "Count"])
         fig_conf = px.pie(df_conf, names="AI Confidence", values="Count", title="AI Confidence Distribution on Reviewed Cases", hole=0.4)
-        r_col2.plotly_chart(fig_conf, use_container_width=True)
+        r_col2.plotly_chart(fig_conf, width="stretch")
 
     st.markdown("---")
 
@@ -820,14 +820,14 @@ def render_analytics_dashboard(df_cases: pd.DataFrame, df_reviews: pd.DataFrame,
                 "corrected_diagnosis", "reason_for_correction"
             ] if col in df_reviews.columns
         ]
-        st.dataframe(df_reviews[display_cols], use_container_width=True)
+        st.dataframe(df_reviews[display_cols], width="stretch")
 
     st.markdown("---")
     st.subheader("🔧 Fix Verification Log Table")
     if df_verifications.empty:
         st.info("No manual verification records present in `data/verification_log.csv`.")
     else:
-        st.dataframe(df_verifications, use_container_width=True)
+        st.dataframe(df_verifications, width="stretch")
 
 def main():
     st.title("NetSage AI — AI-Assisted Network Troubleshooting")

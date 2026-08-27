@@ -26,7 +26,7 @@ class TestDashboardApp(unittest.TestCase):
         verified_cases = filter_cases(self.df_cases, evidence_status="VERIFIED_LAB")
         self.assertFalse(verified_cases.empty)
         self.assertTrue(all(verified_cases["evidence_status"] == "VERIFIED_LAB"))
-        self.assertEqual(len(verified_cases), 10)
+        self.assertEqual(len(verified_cases), 2)
 
     def test_case_selection(self):
         case = get_case_by_id(self.df_cases, "C001")

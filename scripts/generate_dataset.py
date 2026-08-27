@@ -776,9 +776,9 @@ cases = [
     }
 ]
 
-# Add evidence_status to each case (VERIFIED_LAB for validated Packet Tracer labs, DEMO_TEMPLATE for templates)
-for i, c in enumerate(cases):
-    c["evidence_status"] = "VERIFIED_LAB" if i < 10 else "DEMO_TEMPLATE"
+# Add evidence_status to each case (VERIFIED_LAB for validated Packet Tracer labs C001/C002, DOCUMENTED_SCENARIO for remaining documented cases)
+for c in cases:
+    c["evidence_status"] = "VERIFIED_LAB" if c["case_id"] in ["C001", "C002"] else "DOCUMENTED_SCENARIO"
 
 # Write cases.csv
 cases_file = os.path.join("data", "cases.csv")

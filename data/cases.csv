@@ -54,7 +54,7 @@ VLAN Name                             Status    Ports
 1    default                          active    Fa0/1, Fa0/2, Fa0/3, Fa0/4
 10   Sales                            active    Fa0/6, Fa0/7
 20   HR                               active    Fa0/8
-",VLAN 30 does not exist in the VLAN database on Switch1.,Layer 2,Missing VLAN Definition,High,Create VLAN 30 on Switch1 using 'vlan 30' followed by 'name Admin'.,VERIFIED_LAB
+",VLAN 30 does not exist in the VLAN database on Switch1.,Layer 2,Missing VLAN Definition,High,Create VLAN 30 on Switch1 using 'vlan 30' followed by 'name Admin'.,DOCUMENTED_SCENARIO
 C004,VLAN,PC-2 attached to Fa0/10 cannot reach default gateway 192.168.1.1.,Host PC-2 should be in VLAN 10 (subnet 192.168.1.0/24).,"--- Host IP Config ---
 IP: 192.168.1.50, Mask: 255.255.255.0, GW: 192.168.1.1
 
@@ -68,7 +68,7 @@ Name: Fa0/10
 Administrative Mode: static access
 Operational Mode: static access
 Access Mode VLAN: 1 (default)
-",Switch port Fa0/10 is assigned to default VLAN 1 instead of target VLAN 10.,Layer 2,Access Port VLAN Assignment,Medium,"On Switch1 interface Fa0/10, execute 'switchport access vlan 10'.",VERIFIED_LAB
+",Switch port Fa0/10 is assigned to default VLAN 1 instead of target VLAN 10.,Layer 2,Access Port VLAN Assignment,Medium,"On Switch1 interface Fa0/10, execute 'switchport access vlan 10'.",DOCUMENTED_SCENARIO
 C005,VLAN,"Trunk port between Switch1 and Switch2 is down, disabling inter-switch traffic.",Switch1 Gi0/2 connected to Switch2 Gi0/2. DTP negotiation failing.,"--- Switch1 show interfaces Gi0/2 switchport ---
 Name: Gi0/2
 Administrative Mode: dynamic auto
@@ -82,7 +82,7 @@ Administrative Mode: dynamic auto
 Operational Mode: static access
 Negotiation of Trunking: On
 Access Mode VLAN: 1
-","Both trunk ports are set to 'dynamic auto', so neither port initiates trunk negotiation.",Layer 2,Dynamic Trunking Protocol (DTP) Misconfig,Medium,Configure 'switchport mode trunk' statically on interface Gi0/2 of both switches.,VERIFIED_LAB
+","Both trunk ports are set to 'dynamic auto', so neither port initiates trunk negotiation.",Layer 2,Dynamic Trunking Protocol (DTP) Misconfig,Medium,Configure 'switchport mode trunk' statically on interface Gi0/2 of both switches.,DOCUMENTED_SCENARIO
 C006,Gateway/IP,PC-A experiences intermittent loss of connectivity and duplicate IP warnings.,PC-A (192.168.1.100) and PC-B on the same LAN segment.,"--- PC-A Host IP Config ---
 IP Address: 192.168.1.100, Subnet: 255.255.255.0, GW: 192.168.1.1
 MAC: 0001.AAAA.1111
@@ -95,7 +95,7 @@ MAC: 0002.BBBB.2222
 Protocol  Address          Age (min)  Hardware Addr   Type   Interface
 Internet  192.168.1.100           0   0001.AAAA.1111  ARPA   Gi0/0
 Internet  192.168.1.100           0   0002.BBBB.2222  ARPA   Gi0/0
-",Duplicate IP address (192.168.1.100) statically assigned to both PC-A and PC-B.,Layer 3,Duplicate IP Address,High,Reconfigure PC-B to use an unallocated static IP address such as 192.168.1.101.,VERIFIED_LAB
+",Duplicate IP address (192.168.1.100) statically assigned to both PC-A and PC-B.,Layer 3,Duplicate IP Address,High,Reconfigure PC-B to use an unallocated static IP address such as 192.168.1.101.,DOCUMENTED_SCENARIO
 C007,Gateway/IP,PC-1 can reach local subnet hosts (10.0.1.0/24) but cannot reach remote servers (10.0.2.10).,PC-1 (10.0.1.50) connected to Router1 Gi0/0 (10.0.1.1).,"--- PC-1 ipconfig ---
 IP Address. . . . . . . . . . . . : 10.0.1.50
 Subnet Mask . . . . . . . . . . . : 255.255.255.0
@@ -105,7 +105,7 @@ Default Gateway . . . . . . . . . : 10.0.1.254
 Interface                  IP-Address      OK? Method Status                Protocol
 GigabitEthernet0/0         10.0.1.1        YES manual up                    up
 GigabitEthernet0/1         10.0.2.1        YES manual up                    up
-",PC-1 is configured with an invalid default gateway address (10.0.1.254 instead of 10.0.1.1).,Layer 3,Default Gateway Mismatch,High,Change PC-1's default gateway address to 10.0.1.1.,VERIFIED_LAB
+",PC-1 is configured with an invalid default gateway address (10.0.1.254 instead of 10.0.1.1).,Layer 3,Default Gateway Mismatch,High,Change PC-1's default gateway address to 10.0.1.1.,DOCUMENTED_SCENARIO
 C008,Gateway/IP,Host PC-3 (172.16.10.50) cannot ping Gateway 172.16.10.1.,PC-3 connected to Router LAN interface Gi0/0 (172.16.10.1/24).,"--- PC-3 ipconfig ---
 IP Address: 172.16.10.50
 Subnet Mask: 255.255.0.0
@@ -114,7 +114,7 @@ Default Gateway: 172.16.10.1
 --- Router show interfaces GigabitEthernet0/0 ---
 GigabitEthernet0/0 is up, line protocol is up
   Internet Address is 172.16.10.1/24, Extra Subnet 255.255.255.0
-",Subnet mask mismatch between host PC-3 (255.255.0.0 /16) and router interface (255.255.255.0 /24).,Layer 3,Subnet Mask Mismatch,Medium,Update PC-3 subnet mask to 255.255.255.0.,VERIFIED_LAB
+",Subnet mask mismatch between host PC-3 (255.255.0.0 /16) and router interface (255.255.255.0 /24).,Layer 3,Subnet Mask Mismatch,Medium,Update PC-3 subnet mask to 255.255.255.0.,DOCUMENTED_SCENARIO
 C009,Gateway/IP,Hosts on LAN failover fail when primary router R1 goes down.,R1 (192.168.1.2) and R2 (192.168.1.3) configured for HSRP Virtual IP 192.168.1.1.,"--- R1 show standby brief ---
 Interface   Grp  Pri P State   Active          Standby         Virtual IP
 Gi0/0       1    110 P Active  local           192.168.1.3     192.168.1.1
@@ -122,7 +122,7 @@ Gi0/0       1    110 P Active  local           192.168.1.3     192.168.1.1
 --- R2 show standby brief ---
 Interface   Grp  Pri P State   Active          Standby         Virtual IP
 Gi0/0       2    100   Active  local           unknown         192.168.1.1
-",HSRP group ID mismatch (Group 1 on R1 vs Group 2 on R2).,Layer 3,HSRP First-Hop Redundancy Misconfig,High,Reconfigure R2 interface Gi0/0 to use 'standby 1 ip 192.168.1.1'.,VERIFIED_LAB
+",HSRP group ID mismatch (Group 1 on R1 vs Group 2 on R2).,Layer 3,HSRP First-Hop Redundancy Misconfig,High,Reconfigure R2 interface Gi0/0 to use 'standby 1 ip 192.168.1.1'.,DOCUMENTED_SCENARIO
 C010,DHCP,Branch office PCs receive APIPA IP addresses (169.254.x.x) and cannot access company network.,Branch PCs -> Switch -> Branch Router Gi0/0 (192.168.50.1) -> WAN -> HQ Central DHCP Server (10.1.1.100).,"--- Branch PC ipconfig ---
 Autoconfiguration IPv4 Address. . . : 169.254.45.12
 Subnet Mask . . . . . . . . . . . : 255.255.0.0
@@ -133,7 +133,7 @@ interface GigabitEthernet0/0
  ip address 192.168.50.1 255.255.255.0
  duplex auto
  speed auto
-",Missing 'ip helper-address 10.1.1.100' command on Branch Router interface Gi0/0 to forward DHCP broadcasts across the WAN.,Layer 7 / Application (DHCP Relay),DHCP Relay / IP Helper Address,High,"On Branch Router interface Gi0/0, add command 'ip helper-address 10.1.1.100'.",VERIFIED_LAB
+",Missing 'ip helper-address 10.1.1.100' command on Branch Router interface Gi0/0 to forward DHCP broadcasts across the WAN.,Layer 7 / Application (DHCP Relay),DHCP Relay / IP Helper Address,High,"On Branch Router interface Gi0/0, add command 'ip helper-address 10.1.1.100'.",DOCUMENTED_SCENARIO
 C011,DHCP,New PCs added to Sales department fail to obtain IP address from Router DHCP pool.,Router1 acting as local DHCP server for pool SALES_POOL (192.168.10.0/24).,"--- Router1 show ip dhcp binding ---
 IP address       Client-ID/Hardware address      Expiration       Type
 192.168.10.1     0001.1111.1111                  Infinite         Manual
@@ -145,13 +145,13 @@ Pool SALES_POOL :
  Subnet size (total/total addresses) : 254 / 254
  Total leased addresses         : 254
  Pending event addresses        : 0
-",DHCP pool SALES_POOL address space is completely exhausted.,Layer 7,DHCP Pool Exhaustion,High,Expand the DHCP pool subnet mask or clear inactive leases using 'clear ip dhcp binding *'.,DEMO_TEMPLATE
+",DHCP pool SALES_POOL address space is completely exhausted.,Layer 7,DHCP Pool Exhaustion,High,Expand the DHCP pool subnet mask or clear inactive leases using 'clear ip dhcp binding *'.,DOCUMENTED_SCENARIO
 C012,DHCP,Router interface IP conflicts with newly connected host PC.,Router LAN interface is 192.168.1.1. Host assigned 192.168.1.1 via DHCP.,"--- Router show running-config | section dhcp ---
 ip dhcp pool LAN_POOL
  network 192.168.1.0 255.255.255.0
  default-router 192.168.1.1
  dns-server 8.8.8.8
-",Router interface IP (192.168.1.1) was not excluded from the DHCP pool allocation range.,Layer 7,DHCP Excluded Addresses,Medium,Configure 'ip dhcp excluded-address 192.168.1.1 192.168.1.10' on global router prompt.,DEMO_TEMPLATE
+",Router interface IP (192.168.1.1) was not excluded from the DHCP pool allocation range.,Layer 7,DHCP Excluded Addresses,Medium,Configure 'ip dhcp excluded-address 192.168.1.1 192.168.1.10' on global router prompt.,DOCUMENTED_SCENARIO
 C013,DHCP,PCs in VLAN 40 receive IP addresses in 192.168.20.0/24 range instead of 192.168.40.0/24.,Router subinterface Gi0/0.40 (192.168.40.1) configured for VLAN 40.,"--- Router show running-config | section dhcp ---
 ip dhcp pool VLAN40
  network 192.168.20.0 255.255.255.0
@@ -161,7 +161,7 @@ ip dhcp pool VLAN40
 Gi0/0.40 is up, line protocol is up
  Encapsulation 802.1Q Virtual LAN 40
  Internet address is 192.168.40.1/24
-",DHCP pool VLAN40 has incorrect network statement (192.168.20.0 instead of 192.168.40.0).,Layer 7,DHCP Pool Network Misconfig,High,"In DHCP pool VLAN40, replace network statement with 'network 192.168.40.0 255.255.255.0'.",DEMO_TEMPLATE
+",DHCP pool VLAN40 has incorrect network statement (192.168.20.0 instead of 192.168.40.0).,Layer 7,DHCP Pool Network Misconfig,High,"In DHCP pool VLAN40, replace network statement with 'network 192.168.40.0 255.255.255.0'.",DOCUMENTED_SCENARIO
 C014,DNS,"PC can ping 8.8.8.8 directly, but browsing to www.cisco.com fails with domain name resolution error.",Host PC (192.168.1.25) -> Router1 -> Internet. Internal DNS server is 10.0.0.53.,"--- Host PC nslookup www.cisco.com ---
 ;;; Connection to 192.168.1.254 timed out -- no servers could be reached.
 
@@ -173,7 +173,7 @@ DNS Servers . . . . . . . . . . . : 192.168.1.254
 
 --- Router1 show ip interface brief ---
 GigabitEthernet0/0         192.168.1.1     YES manual up                    up
-",Host PC has an invalid DNS server IP address (192.168.1.254 where no DNS server runs).,Layer 7,DNS Server Misconfiguration,Medium,Change host PC DNS server setting to valid DNS server 10.0.0.53 or 8.8.8.8.,DEMO_TEMPLATE
+",Host PC has an invalid DNS server IP address (192.168.1.254 where no DNS server runs).,Layer 7,DNS Server Misconfiguration,Medium,Change host PC DNS server setting to valid DNS server 10.0.0.53 or 8.8.8.8.,DOCUMENTED_SCENARIO
 C015,DNS,"Pinging server by FQDN 'server1.company.local' succeeds, but pinging short name 'server1' fails.",Host PC on internal domain company.local.,"--- Host CLI ---
 C:\> ping server1
 Ping request could not find host server1. Please check the name and try again.
@@ -182,12 +182,12 @@ C:\> ipconfig /all
 Host Name . . . . . . . . . . . . : PC-Client
 Primary DnS Suffix  . . . . . . . : 
 DNS Servers . . . . . . . . . . . : 10.0.0.53
-",Missing DNS domain suffix configuration on client host.,Layer 7,DNS Domain Suffix Search,Low,Configure DNS domain search suffix 'company.local' on host or router DHCP pool option.,DEMO_TEMPLATE
+",Missing DNS domain suffix configuration on client host.,Layer 7,DNS Domain Suffix Search,Low,Configure DNS domain search suffix 'company.local' on host or router DHCP pool option.,DOCUMENTED_SCENARIO
 C016,DNS,DNS queries sent to corporate DNS server 172.16.50.2 time out across the router.,"Client on VLAN 10 (192.168.10.0/24), DNS server on DMZ (172.16.50.2). Router link between them.","--- Router show access-lists DMZ_IN ---
 Extended IP access list DMZ_IN
     10 permit tcp 192.168.10.0 0.0.0.255 host 172.16.50.2 eq 53
     20 deny ip any any (142 matches)
-","ACL only permits TCP port 53 for DNS, blocking standard UDP port 53 DNS queries.",Layer 4 / 7,DNS Transport Protocol (UDP vs TCP),High,Modify ACL DMZ_IN to permit UDP port 53 traffic: 'permit udp 192.168.10.0 0.0.0.255 host 172.16.50.2 eq 53'.,DEMO_TEMPLATE
+","ACL only permits TCP port 53 for DNS, blocking standard UDP port 53 DNS queries.",Layer 4 / 7,DNS Transport Protocol (UDP vs TCP),High,Modify ACL DMZ_IN to permit UDP port 53 traffic: 'permit udp 192.168.10.0 0.0.0.255 host 172.16.50.2 eq 53'.,DOCUMENTED_SCENARIO
 C017,Routing,"PC-A (192.168.10.10) gets IP and ping gateway works, but cannot reach Server in VLAN 30 (10.0.30.50).",PC-A -> Router1 -> Router2 -> Server (10.0.30.50). Gateway ping succeeds.,"--- PC-A ping 10.0.30.50 ---
 Request timed out.
 
@@ -199,7 +199,7 @@ C    172.16.12.0/30 is directly connected, GigabitEthernet0/1
 
 --- Router1 show access-lists ---
 No access lists configured.
-",Router1 missing route to destination network 10.0.30.0/24.,Layer 3,Missing Static Route,High,Add static route on Router1: 'ip route 10.0.30.0 255.255.255.0 172.16.12.2'.,DEMO_TEMPLATE
+",Router1 missing route to destination network 10.0.30.0/24.,Layer 3,Missing Static Route,High,Add static route on Router1: 'ip route 10.0.30.0 255.255.255.0 172.16.12.2'.,DOCUMENTED_SCENARIO
 C018,Routing,OSPF neighbor adjacency between Router1 and Router2 stays in INIT/EXSTART state.,Router1 Gi0/1 (10.0.0.1/30) connected to Router2 Gi0/1 (10.0.0.2/30).,"--- Router1 show ip ospf interface Gi0/1 ---
 GigabitEthernet0/1 is up, line protocol is up
   Process ID 1, Router ID 1.1.1.1, Network Type BROADCAST, Cost: 1
@@ -210,7 +210,7 @@ GigabitEthernet0/1 is up, line protocol is up
 GigabitEthernet0/1 is up, line protocol is up
   Process ID 1, Router ID 2.2.2.2, Network Type BROADCAST, Cost: 1
   Timer intervals configured, Hello 30, Dead 120, Wait 120, Retransmit 5
-",OSPF Hello/Dead timer mismatch between Router1 (10/40) and Router2 (30/120).,Layer 3,OSPF Timer Mismatch,High,"On Router2 interface Gi0/1, set 'ip ospf hello-interval 10' and 'ip ospf dead-interval 40'.",DEMO_TEMPLATE
+",OSPF Hello/Dead timer mismatch between Router1 (10/40) and Router2 (30/120).,Layer 3,OSPF Timer Mismatch,High,"On Router2 interface Gi0/1, set 'ip ospf hello-interval 10' and 'ip ospf dead-interval 40'.",DOCUMENTED_SCENARIO
 C019,Routing,Router2 does not form EIGRP neighbor relationship with Router1.,Router1 and Router2 connected over 172.16.1.0/30 WAN link.,"--- Router1 show ip eigrp interfaces ---
 EIGRP-IPv4 Interfaces for AS(100)
 Xmit Queue   Mean   Pacing Time   Multicast    Pending
@@ -221,7 +221,7 @@ Gi0/1                    1        0/0        10       0/0          50          0
 router eigrp 200
  network 172.16.1.0 0.0.0.3
  no auto-summary
-",EIGRP Autonomous System (AS) number mismatch (AS 100 on Router1 vs AS 200 on Router2).,Layer 3,EIGRP AS Mismatch,High,Change Router2 EIGRP process to 'router eigrp 100'.,DEMO_TEMPLATE
+",EIGRP Autonomous System (AS) number mismatch (AS 100 on Router1 vs AS 200 on Router2).,Layer 3,EIGRP AS Mismatch,High,Change Router2 EIGRP process to 'router eigrp 100'.,DOCUMENTED_SCENARIO
 C020,Routing,Router1 fails to advertise LAN routes to Router2 via OSPF.,Router1 LAN interface Gi0/0 (192.168.1.1/24) configured in OSPF.,"--- Router1 show running-config | section ospf ---
 router ospf 1
  router-id 1.1.1.1
@@ -232,7 +232,7 @@ router ospf 1
 --- Router1 show ip ospf neighbor ---
 Neighbor ID     Pri   State           Dead Time   Address         Interface
  (No active OSPF neighbors on Gi0/1)
-",OSPF WAN interface GigabitEthernet0/1 misconfigured as a passive-interface.,Layer 3,OSPF Passive Interface Misconfig,High,"Under OSPF router configuration on Router1, execute 'no passive-interface GigabitEthernet0/1'.",DEMO_TEMPLATE
+",OSPF WAN interface GigabitEthernet0/1 misconfigured as a passive-interface.,Layer 3,OSPF Passive Interface Misconfig,High,"Under OSPF router configuration on Router1, execute 'no passive-interface GigabitEthernet0/1'.",DOCUMENTED_SCENARIO
 C021,Routing,BGP session between HQ Router (AS 65001) and ISP Router (AS 65500) fails to establish.,Point-to-point link 203.0.113.0/30.,"--- HQ Router show ip bgp summary ---
 BGP router identifier 1.1.1.1, local AS number 65001
 Neighbor        V           AS MsgRcvd MsgSent   TblVer  InQ OutQ Up/Down  State/PfxRcd
@@ -242,7 +242,7 @@ Neighbor        V           AS MsgRcvd MsgSent   TblVer  InQ OutQ Up/Down  State
 router bgp 65500
  bgp router-id 2.2.2.2
  neighbor 203.0.113.1 remote-as 65001
-",HQ Router configured with wrong remote-as (65501 instead of ISP AS 65500).,Layer 3 / 4,BGP Remote AS Mismatch,High,"On HQ Router, correct neighbor definition to 'neighbor 203.0.113.2 remote-as 65500'.",DEMO_TEMPLATE
+",HQ Router configured with wrong remote-as (65501 instead of ISP AS 65500).,Layer 3 / 4,BGP Remote AS Mismatch,High,"On HQ Router, correct neighbor definition to 'neighbor 203.0.113.2 remote-as 65500'.",DOCUMENTED_SCENARIO
 C022,ACL,PC-A (192.168.10.5) cannot access Web Server (10.0.0.100) on port 80.,Router1 interface Gi0/1 outbound ACL named BLOCK_WEB.,"--- Router1 show ip access-lists BLOCK_WEB ---
 Extended IP access list BLOCK_WEB
     10 deny tcp host 192.168.10.5 host 10.0.0.100 eq 80
@@ -252,24 +252,24 @@ Extended IP access list BLOCK_WEB
 GigabitEthernet0/1 is up, line protocol is up
   Outbound access list is BLOCK_WEB
   Inbound access list is not set
-","ACL missing explicit 'permit ip any any' rule, causing implicit deny to block all traffic.",Layer 4 / 3,ACL Implicit Deny,High,Add rule '20 permit ip any any' to access-list BLOCK_WEB.,DEMO_TEMPLATE
+","ACL missing explicit 'permit ip any any' rule, causing implicit deny to block all traffic.",Layer 4 / 3,ACL Implicit Deny,High,Add rule '20 permit ip any any' to access-list BLOCK_WEB.,DOCUMENTED_SCENARIO
 C023,ACL,Host 192.168.1.50 can still SSH to Server 10.0.0.5 despite access list blocking rule.,Target requirement: Block SSH (port 22) from host to server.,"--- Router show ip access-lists SEC_ACL ---
 Extended IP access list SEC_ACL
     10 deny tcp host 192.168.1.50 host 10.0.0.5 eq 23
     20 permit ip any any
-",ACL rule checks port 23 (Telnet) instead of port 22 (SSH).,Layer 4,ACL Port Number Error,Medium,Replace rule 10 in SEC_ACL with 'deny tcp host 192.168.1.50 host 10.0.0.5 eq 22'.,DEMO_TEMPLATE
+",ACL rule checks port 23 (Telnet) instead of port 22 (SSH).,Layer 4,ACL Port Number Error,Medium,Replace rule 10 in SEC_ACL with 'deny tcp host 192.168.1.50 host 10.0.0.5 eq 22'.,DOCUMENTED_SCENARIO
 C024,ACL,Entire HR department (192.168.20.0/24) is blocked from accessing Internet.,Standard ACL intended to block single host 192.168.20.5.,"--- Router show access-lists 10 ---
 Standard IP access list 10
     10 deny 192.168.20.0 0.0.0.255
     20 permit any
-",Wildcard mask 0.0.0.255 matches the entire /24 subnet instead of host 192.168.20.5 (host / 0.0.0.0).,Layer 3,ACL Wildcard Mask Error,High,Update ACL 10 rule 10 to 'deny host 192.168.20.5' or 'deny 192.168.20.5 0.0.0.0'.,DEMO_TEMPLATE
+",Wildcard mask 0.0.0.255 matches the entire /24 subnet instead of host 192.168.20.5 (host / 0.0.0.0).,Layer 3,ACL Wildcard Mask Error,High,Update ACL 10 rule 10 to 'deny host 192.168.20.5' or 'deny 192.168.20.5 0.0.0.0'.,DOCUMENTED_SCENARIO
 C025,ACL,Inter-departmental traffic between VLAN 10 and VLAN 20 drops at router interface.,Router subinterface Gi0/0.10 inbound ACL.,"--- Router show ip access-lists FILTER_VLAN10 ---
 Extended IP access list FILTER_VLAN10
     10 deny ip 192.168.10.0 0.0.0.255 192.168.20.0 0.0.0.255
 
 --- Router show interface Gi0/0.10 ---
   Inbound access list is FILTER_VLAN10
-","ACL missing permit statement at end, dropping all traffic coming into Gi0/0.10.",Layer 3,ACL Inbound Drop,High,Add 'permit ip any any' to FILTER_VLAN10.,DEMO_TEMPLATE
+","ACL missing permit statement at end, dropping all traffic coming into Gi0/0.10.",Layer 3,ACL Inbound Drop,High,Add 'permit ip any any' to FILTER_VLAN10.,DOCUMENTED_SCENARIO
 C026,NAT,Internal LAN PCs (192.168.1.0/24) cannot reach external Internet IP addresses (8.8.8.8).,Router1 connected to Internal LAN (Gi0/0) and Internet ISP (Gi0/1).,"--- Router1 show ip nat translations ---
  (No active NAT translations present)
 
@@ -281,20 +281,20 @@ access-list 1 permit 192.168.1.0 0.0.0.255
 Interface                  IP-Address      OK? Method Status                Protocol
 GigabitEthernet0/0         192.168.1.1     YES manual up                    up
 GigabitEthernet0/1         203.0.113.1     YES manual up                    up
-",Missing 'ip nat inside' on Gi0/0 and 'ip nat outside' on Gi0/1 interface configurations.,Layer 3 / 4 (NAT),NAT Interface Role Configuration,High,Apply 'ip nat inside' on interface Gi0/0 and 'ip nat outside' on interface Gi0/1.,DEMO_TEMPLATE
+",Missing 'ip nat inside' on Gi0/0 and 'ip nat outside' on Gi0/1 interface configurations.,Layer 3 / 4 (NAT),NAT Interface Role Configuration,High,Apply 'ip nat inside' on interface Gi0/0 and 'ip nat outside' on interface Gi0/1.,DOCUMENTED_SCENARIO
 C027,NAT,"LAN subnet 192.168.2.0/24 hosts cannot access Internet via NAT, while 192.168.1.0/24 works.",New subnet 192.168.2.0/24 added to corporate LAN.,"--- Router show running-config | include access-list ---
 access-list 10 permit 192.168.1.0 0.0.0.255
 
 --- Router show running-config | include ip nat ---
 ip nat inside source list 10 interface Serial0/0/0 overload
-",NAT ACL 10 does not permit the newly added subnet 192.168.2.0/24.,Layer 3,NAT Access List Matching,Medium,Add line 'access-list 10 permit 192.168.2.0 0.0.0.255' to global configuration.,DEMO_TEMPLATE
+",NAT ACL 10 does not permit the newly added subnet 192.168.2.0/24.,Layer 3,NAT Access List Matching,Medium,Add line 'access-list 10 permit 192.168.2.0 0.0.0.255' to global configuration.,DOCUMENTED_SCENARIO
 C028,NAT,External clients cannot reach internal Web Server via Static NAT IP 203.0.113.50.,Internal Web Server IP: 192.168.1.50. Public IP: 203.0.113.50.,"--- Router show running-config | section nat ---
 ip nat inside source static 192.168.1.55 203.0.113.50
 interface GigabitEthernet0/0
  ip nat inside
 interface GigabitEthernet0/1
  ip nat outside
-",Static NAT translation maps public IP to wrong internal IP (192.168.1.55 instead of 192.168.1.50).,Layer 3,Static NAT Mapping Error,High,Correct static NAT entry to 'ip nat inside source static 192.168.1.50 203.0.113.50'.,DEMO_TEMPLATE
+",Static NAT translation maps public IP to wrong internal IP (192.168.1.55 instead of 192.168.1.50).,Layer 3,Static NAT Mapping Error,High,Correct static NAT entry to 'ip nat inside source static 192.168.1.50 203.0.113.50'.,DOCUMENTED_SCENARIO
 C029,Wireless,Wireless Laptop cannot connect to Access Point; authentication fails continuously.,Laptop connecting to WPA2-Personal Wi-Fi SSID 'Corporate_Wi-Fi'.,"--- Laptop Wireless Status ---
 SSID: Corporate_Wi-Fi
 Security: WPA2-PSK
@@ -306,7 +306,7 @@ dot11 ssid Corporate_Wi-Fi
    authentication open
    authentication key-management wpa version 2
    wpa-psk ascii SecretPass123!
-",WPA2 Pre-Shared Key mismatch between laptop ('SecretPass123') and Access Point ('SecretPass123!').,Layer 2 / Security,WPA2 Pre-Shared Key Mismatch,High,Update laptop wireless security key to match AP key 'SecretPass123!'.,DEMO_TEMPLATE
+",WPA2 Pre-Shared Key mismatch between laptop ('SecretPass123') and Access Point ('SecretPass123!').,Layer 2 / Security,WPA2 Pre-Shared Key Mismatch,High,Update laptop wireless security key to match AP key 'SecretPass123!'.,DOCUMENTED_SCENARIO
 C030,Wireless,Wireless clients see SSID 'Staff_WiFi' but fail to obtain an IP address via DHCP.,WLC / AP mapping SSID 'Staff_WiFi' to VLAN 50.,"--- WLC show wlan 1 ---
 WLAN Identifier.................................. 1
 WLAN Network Name (SSID)......................... Staff_WiFi
@@ -319,7 +319,7 @@ VLAN Name                             Status    Ports
 1    default                          active    Gi0/1, Gi0/2
 10   Management                       active    Gi0/3
  (VLAN 50 missing from switch database)
-",WLAN mapped VLAN 50 does not exist on the underlying physical switch.,Layer 2,WLAN VLAN Interface Mapping,High,Add VLAN 50 to Switch1 VLAN database and trunk allowed list.,DEMO_TEMPLATE
+",WLAN mapped VLAN 50 does not exist on the underlying physical switch.,Layer 2,WLAN VLAN Interface Mapping,High,Add VLAN 50 to Switch1 VLAN database and trunk allowed list.,DOCUMENTED_SCENARIO
 C031,Wireless,Lightweight Access Point (LAP-1) remains in joining loop and fails to discover WLC.,LAP-1 (Subnet 192.168.100.0/24) seeking Wireless LAN Controller WLC-1 (10.10.10.5).,"--- LAP-1 Console Log ---
 *Mar 1 00:02:15.111: %CAPWAP-3-ERRORLOG: Did not get response to discovery request!
 *Mar 1 00:02:20.112: %CAPWAP-3-ERRORLOG: Could not resolve WLC IP address via Option 43 or DNS.
@@ -328,7 +328,7 @@ C031,Wireless,Lightweight Access Point (LAP-1) remains in joining loop and fails
 ip dhcp pool AP_POOL
  network 192.168.100.0 255.255.255.0
  default-router 192.168.100.1
-",DHCP pool AP_POOL missing Option 43 (hex value for WLC IP 10.10.10.5).,Layer 7 (CAPWAP Discovery),CAPWAP / WLC Option 43 Discovery,High,Add 'option 43 hex f1040a0a0a05' to DHCP pool AP_POOL.,DEMO_TEMPLATE
+",DHCP pool AP_POOL missing Option 43 (hex value for WLC IP 10.10.10.5).,Layer 7 (CAPWAP Discovery),CAPWAP / WLC Option 43 Discovery,High,Add 'option 43 hex f1040a0a0a05' to DHCP pool AP_POOL.,DOCUMENTED_SCENARIO
 C032,Wireless,Guest Wi-Fi users can ping internal corporate server 10.0.0.100.,Guest Wi-Fi requirement: Complete isolation from internal LAN.,"--- Guest Laptop ping 10.0.0.100 ---
 Reply from 10.0.0.100: bytes=32 time=2ms TTL=128
 
@@ -337,7 +337,7 @@ interface GigabitEthernet0/0.99
  encapsulation dot1Q 99
  ip address 192.168.99.1 255.255.255.0
  (No access group applied)
-",Guest VLAN 99 interface lacks access group blocking traffic to internal subnets (10.0.0.0/8).,Layer 3 / Security,Guest Wireless Isolation Failure,High,Apply inbound ACL on Gi0/0.99 blocking 10.0.0.0/8 destination traffic.,DEMO_TEMPLATE
+",Guest VLAN 99 interface lacks access group blocking traffic to internal subnets (10.0.0.0/8).,Layer 3 / Security,Guest Wireless Isolation Failure,High,Apply inbound ACL on Gi0/0.99 blocking 10.0.0.0/8 destination traffic.,DOCUMENTED_SCENARIO
 C033,Mixed,PC in VLAN 10 cannot access Web Server in VLAN 20. Neither VLAN can reach Internet.,Router-on-a-stick topology with NAT overload.,"--- Router show running-config interface Gi0/0 ---
 interface GigabitEthernet0/0
  no ip address
@@ -348,7 +348,7 @@ interface GigabitEthernet0/0
 --- Router show ip route ---
 Gateway of last resort is not set
 C 203.0.113.0/30 is directly connected, GigabitEthernet0/1
-",Router interface Gi0/0 missing subinterface VLAN encapsulation (Gi0/0.10 & Gi0/0.20) and missing default static route.,Layer 2 & Layer 3,Inter-VLAN & Default Route Combo Fault,Critical,Configure subinterfaces Gi0/0.10 and Gi0/0.20 with dot1q encapsulation and default route 'ip route 0.0.0.0 0.0.0.0 203.0.113.2'.,DEMO_TEMPLATE
+",Router interface Gi0/0 missing subinterface VLAN encapsulation (Gi0/0.10 & Gi0/0.20) and missing default static route.,Layer 2 & Layer 3,Inter-VLAN & Default Route Combo Fault,Critical,Configure subinterfaces Gi0/0.10 and Gi0/0.20 with dot1q encapsulation and default route 'ip route 0.0.0.0 0.0.0.0 203.0.113.2'.,DOCUMENTED_SCENARIO
 C034,Mixed,PC receives IP via DHCP but cannot resolve domain names or ping outside subnet.,Branch router supplying DHCP.,"--- Branch PC ipconfig /all ---
 IPv4 Address: 192.168.1.15
 Subnet Mask: 255.255.255.0
@@ -357,7 +357,7 @@ DNS Server: 192.168.1.254
 
 --- Branch Router interface Gi0/0 ---
 ip address 192.168.1.1 255.255.255.0
-",DHCP pool specifies invalid gateway and DNS server IP (192.168.1.254 instead of router IP 192.168.1.1).,Layer 3 & Layer 7,DHCP Gateway & DNS Option Mismatch,High,"Update DHCP pool config: default-router 192.168.1.1, dns-server 8.8.8.8.",DEMO_TEMPLATE
+",DHCP pool specifies invalid gateway and DNS server IP (192.168.1.254 instead of router IP 192.168.1.1).,Layer 3 & Layer 7,DHCP Gateway & DNS Option Mismatch,High,"Update DHCP pool config: default-router 192.168.1.1, dns-server 8.8.8.8.",DOCUMENTED_SCENARIO
 C035,Mixed,Finance PC-1 (10.10.10.15) ping to Accounting Server (10.20.20.50) fails intermittently.,Finance PC connected to Switch1 Fa0/1.,"--- Switch1 show interfaces Fa0/1 ---
 FastEthernet0/1 is up, line protocol is down (err-disabled)
   Port security violation count: 1
@@ -370,4 +370,4 @@ Max Addresses              : 1
 Total Addresses            : 1
 Configured MAC Addresses   : 0010.a1b2.c3d4
 Last Source Address:Vlan   : 0050.7966.9999:10
-",Switch port Fa0/1 tripped port-security shutdown due to unauthorized MAC address connected.,Layer 2,Port Security Violation,High,Clear port violation with 'shutdown' / 'no shutdown' on Fa0/1 after authorizing MAC address.,DEMO_TEMPLATE
+",Switch port Fa0/1 tripped port-security shutdown due to unauthorized MAC address connected.,Layer 2,Port Security Violation,High,Clear port violation with 'shutdown' / 'no shutdown' on Fa0/1 after authorizing MAC address.,DOCUMENTED_SCENARIO

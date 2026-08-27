@@ -1,0 +1,17 @@
+--- [Router0] show ip interface brief ---
+Interface              IP-Address      OK? Method Status                Protocol 
+FastEthernet0/1        unassigned      YES manual up                    up 
+
+FastEthernet0/10       unassigned      YES manual down                  down 
+FastEthernet0/11       unassigned      YES manual down                  down 
+FastEthernet0/12       unassigned      YES manual down                  down 
+FastEthernet0/13       unassigned      YES manual down                  down 
+FastEthernet0/14       unassigned      YES manual down                  down 
+FastEthernet0/15       unassigned      YES manual down                  down 
+FastEthernet0/16       unassigned      YES manual down                  down 
+FastEthernet0/17       unassigned      YES manual down                  down 
+FastEthernet0/18       unassigned      YES manual down                  down 
+FastEthernet0/19       unassigned      YES manual down                  down 
+FastEthernet0/20       unassigned      YES manual down                  down 
+FastEthernet0/21       unassigned      YES manual down                  down 
+ --More--
