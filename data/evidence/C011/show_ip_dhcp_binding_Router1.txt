@@ -1,0 +1,3 @@
+IP address       Client-ID/Hardware address      Expiration       Type
+192.168.10.1     0001.1111.1111                  Infinite         Manual
+... [254 active bindings listed] ...

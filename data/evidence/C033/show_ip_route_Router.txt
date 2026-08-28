@@ -1,0 +1,2 @@
+Gateway of last resort is not set
+C 203.0.113.0/30 is directly connected, GigabitEthernet0/1

@@ -1,0 +1,4 @@
+Name: Fa0/10
+Administrative Mode: static access
+Operational Mode: static access
+Access Mode VLAN: 1 (default)

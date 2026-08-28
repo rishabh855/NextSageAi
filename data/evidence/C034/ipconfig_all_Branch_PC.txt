@@ -1,0 +1,4 @@
+IPv4 Address: 192.168.1.15
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.1.254
+DNS Server: 192.168.1.254

@@ -1,0 +1,2 @@
+*Mar 1 00:02:15.111: %CAPWAP-3-ERRORLOG: Did not get response to discovery request!
+*Mar 1 00:02:20.112: %CAPWAP-3-ERRORLOG: Could not resolve WLC IP address via Option 43 or DNS.

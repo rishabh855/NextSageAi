@@ -1,0 +1,5 @@
+Pool SALES_POOL :
+ Utilization mark (high/low)    : 100 / 0
+ Subnet size (total/total addresses) : 254 / 254
+ Total leased addresses         : 254
+ Pending event addresses        : 0

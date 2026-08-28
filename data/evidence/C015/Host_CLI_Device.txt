@@ -1,0 +1,7 @@
+C:\> ping server1
+Ping request could not find host server1. Please check the name and try again.
+
+C:\> ipconfig /all
+Host Name . . . . . . . . . . . . : PC-Client
+Primary DnS Suffix  . . . . . . . : 
+DNS Servers . . . . . . . . . . . : 10.0.0.53

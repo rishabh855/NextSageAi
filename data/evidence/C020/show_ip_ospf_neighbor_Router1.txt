@@ -1,0 +1,2 @@
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+ (No active OSPF neighbors on Gi0/1)

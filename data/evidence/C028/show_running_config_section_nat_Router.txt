@@ -1,0 +1,5 @@
+ip nat inside source static 192.168.1.55 203.0.113.50
+interface GigabitEthernet0/0
+ ip nat inside
+interface GigabitEthernet0/1
+ ip nat outside

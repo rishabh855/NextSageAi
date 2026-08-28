@@ -1,0 +1,4 @@
+SSID: Corporate_Wi-Fi
+Security: WPA2-PSK
+Key: SecretPass123
+Status: Authentication Failed

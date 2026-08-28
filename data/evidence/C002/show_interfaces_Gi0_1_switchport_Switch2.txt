@@ -1,0 +1,4 @@
+Name: Gi0/1
+Operational Mode: trunk
+Administrative Native VLAN tagging: disabled
+Trunking Native VLAN: 1 (default)

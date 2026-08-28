@@ -1,0 +1,5 @@
+Name: Gi0/2
+Administrative Mode: dynamic auto
+Operational Mode: static access
+Negotiation of Trunking: On
+Access Mode VLAN: 1

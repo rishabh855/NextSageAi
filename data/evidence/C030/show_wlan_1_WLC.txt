@@ -1,0 +1,4 @@
+WLAN Identifier.................................. 1
+WLAN Network Name (SSID)......................... Staff_WiFi
+Interface Name................................... vlan-50-interface
+Status........................................... Enabled

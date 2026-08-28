@@ -1,0 +1,1 @@
+Reply from 10.0.0.100: bytes=32 time=2ms TTL=128

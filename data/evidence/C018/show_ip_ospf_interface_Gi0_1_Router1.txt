@@ -1,0 +1,4 @@
+GigabitEthernet0/1 is up, line protocol is up
+  Process ID 1, Router ID 1.1.1.1, Network Type BROADCAST, Cost: 1
+  Transmit Delay is 1 sec, State DR, Priority 1
+  Timer intervals configured, Hello 10, Dead 40, Wait 40, Retransmit 5

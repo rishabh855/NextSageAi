@@ -1,0 +1,3 @@
+Extended IP access list SEC_ACL
+    10 deny tcp host 192.168.1.50 host 10.0.0.5 eq 23
+    20 permit ip any any

@@ -1,0 +1,5 @@
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+1    default                          active    Fa0/1, Fa0/3
+10   Sales                            active    Fa0/2
+20   Engineering                      active

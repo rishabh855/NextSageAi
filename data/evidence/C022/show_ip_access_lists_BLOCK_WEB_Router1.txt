@@ -1,0 +1,3 @@
+Extended IP access list BLOCK_WEB
+    10 deny tcp host 192.168.10.5 host 10.0.0.100 eq 80
+    (implicit deny ip any any at end of list)

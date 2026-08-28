@@ -368,14 +368,10 @@ def render_priority_rail(active_tier: str = "P1"):
     for code, name in tiers:
         is_active = (code == active_tier)
         css_class = "priority-tier-box active-tier-fail" if is_active else "priority-tier-box"
-        rail_html += f'''
-        <div class="{css_class}">
-            <div class="priority-tier-code">{code}</div>
-            <div class="priority-tier-name">{name}</div>
-        </div>
-        '''
+        rail_html += f'<div class="{css_class}"><div class="priority-tier-code">{code}</div><div class="priority-tier-name">{name}</div></div>'
     rail_html += '</div>'
     st.markdown(rail_html, unsafe_allow_html=True)
+
 
 @st.cache_data
 def load_cases(csv_path: str = CASES_CSV_PATH) -> pd.DataFrame:
@@ -657,8 +653,9 @@ def render_new_session_workflow(
                             )
                     st.rerun()
         else:
-            st.markdown('<div class="status-vocab status-vocab-pass">SESSION COMPLETE — INVESTIGATION CONCLUDED</div>', unsafe_allow_html=True)
+            st.markdown('<div class="status-vocab status-vocab-pass">SESSION COMPLETE - INVESTIGATION CONCLUDED</div>', unsafe_allow_html=True)
             st.caption("Standard diagnostic checks completed or fault pinpointed.")
+
 
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -712,13 +709,24 @@ def render_new_session_workflow(
         # Evidence Citations DIRECTLY UNDER Claim
         st.markdown("**EVIDENCE CITATIONS:**")
         for ev in diag.get("evidence", []):
-            st.markdown(f"↳ `<span style='color: #38bdf8; font-family: monospace;'>{ev}</span>`", unsafe_allow_html=True)
+            st.markdown(f"↳ <span style='color: #38bdf8; font-family: monospace;'>{ev}</span>", unsafe_allow_html=True)
 
-        st.markdown(f"**RECOMMENDED FIX PROCEDURE:**")
+        st.markdown("**RECOMMENDED FIX PROCEDURE:**")
         for idx, step in enumerate(diag.get("fix_steps", []), 1):
-            st.markdown(f"{idx}. `{step}`")
+            st.markdown(f"{idx}. {step}")
+
+        ios_cmds = diag.get("ios_commands", [])
+        if ios_cmds:
+            st.markdown("**CISCO IOS CONFIGURATION COMMANDS:**")
+            st.code("\n".join(ios_cmds), language="cisco")
+
+        verif_cmds = diag.get("verification_commands", [])
+        if verif_cmds:
+            st.markdown("**VERIFICATION COMMANDS:**")
+            st.code("\n".join(verif_cmds), language="cisco")
 
         st.markdown('</div>', unsafe_allow_html=True)
+
 
         # --- SECTION 4: RESPONSIBLE AI REVIEW & OVERSIGHT ---
         st.markdown('<div class="ops-panel">', unsafe_allow_html=True)

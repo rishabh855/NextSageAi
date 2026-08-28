@@ -361,11 +361,242 @@ Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
 1. Only reference devices that are explicitly named in the topology note or appear in the show-command evidence provided. Do not invent, assume, or default to placeholder device names.
 2. Base your root cause strictly on the evidence given.
 3. Cross-check configs line by line.
+4. "fix_steps" must contain the exact Cisco CLI configuration commands (e.g., 'vlan 30', 'switchport trunk allowed vlan add 10', 'ip helper-address 10.1.1.100') required to resolve the identified fault.
 
 Output MUST be a single, valid JSON object with keys:
 "root_cause", "confidence", "evidence", "osi_layer", "concept", "next_command", "fix_steps".
 """
         return prompt
+
+    @staticmethod
+    def generate_structured_remediation(failed_rules: List[Dict[str, Any]], case_info: Dict[str, Any]) -> tuple[List[str], List[str], List[str]]:
+        if not failed_rules:
+            return (
+                ["Review device configuration in Cisco Packet Tracer."],
+                [],
+                ["show running-config", "show ip interface brief"]
+            )
+
+        steps = []
+        ios_commands = []
+        verification_commands = []
+
+        for r in failed_rules:
+            check_name = r.get("check_name", "")
+            details = r.get("details", "")
+            details_low = details.lower()
+
+            vlan_match = re.search(r"VLAN\s*(\d+)", details, re.IGNORECASE)
+            vlan_id = vlan_match.group(1) if vlan_match else "30"
+
+            dev_match = re.search(r"\b(Switch\d*|Router\d*|R\d+|SW\d+|PC\d*)\b", details, re.IGNORECASE)
+            dev_name = dev_match.group(1) if dev_match else "Switch1"
+
+            iface_match = re.search(r"\b(GigabitEthernet\S+|FastEthernet\S+|Gi\S+|Fa\S+)\b", details, re.IGNORECASE)
+            iface_name = iface_match.group(1) if iface_match else "GigabitEthernet0/1"
+
+            if "VLAN Database" in check_name or "vlan database" in details_low:
+                target_sw = dev_name if dev_name else "Switch1"
+                vid = vlan_id if vlan_id else "30"
+                steps.append(f"Create VLAN {vid} on {target_sw} and assign it to the VLAN database.")
+                ios_commands.extend([
+                    "enable",
+                    "configure terminal",
+                    f"vlan {vid}",
+                    f"name VLAN{vid}",
+                    "end",
+                    "write memory"
+                ])
+                verification_commands.extend([
+                    "show vlan brief",
+                    "show interfaces trunk"
+                ])
+
+            elif "Trunk" in check_name or "trunking" in details_low or "pruned" in details_low:
+                target_sw = dev_name if dev_name else "Switch2"
+                vid = vlan_id if vlan_id else "10"
+                steps.append(f"Add VLAN {vid} to the allowed VLAN list on {target_sw} interface {iface_name}.")
+                ios_commands.extend([
+                    "enable",
+                    "configure terminal",
+                    f"interface {iface_name}",
+                    f"switchport trunk allowed vlan add {vid}",
+                    "end",
+                    "write memory"
+                ])
+                verification_commands.extend([
+                    "show interfaces trunk",
+                    f"show interfaces {iface_name} switchport"
+                ])
+
+            elif "Native VLAN" in check_name or "native vlan" in details_low:
+                target_sw = dev_name if dev_name else "Switch2"
+                vid = vlan_id if vlan_id else "10"
+                steps.append(f"Configure matching native VLAN {vid} on {target_sw} interface {iface_name}.")
+                ios_commands.extend([
+                    "enable",
+                    "configure terminal",
+                    f"interface {iface_name}",
+                    f"switchport trunk native vlan {vid}",
+                    "end",
+                    "write memory"
+                ])
+                verification_commands.extend([
+                    "show interfaces trunk",
+                    f"show interfaces {iface_name} switchport"
+                ])
+
+            elif "DHCP Relay" in check_name or "helper-address" in details_low:
+                target_rtr = dev_name if dev_name else "Branch Router"
+                target_if = iface_name if iface_name else "GigabitEthernet0/0"
+                steps.append(f"Configure 'ip helper-address' on {target_rtr} interface {target_if} pointing to DHCP server 10.1.1.100.")
+                ios_commands.extend([
+                    "enable",
+                    "configure terminal",
+                    f"interface {target_if}",
+                    "ip helper-address 10.1.1.100",
+                    "end",
+                    "write memory"
+                ])
+                verification_commands.extend([
+                    f"show running-config interface {target_if}",
+                    "show ip dhcp binding"
+                ])
+
+            elif "DHCP Option" in check_name or "dhcp pool" in details_low:
+                steps.append("Configure missing default gateway and network subnet in local router DHCP pool.")
+                ios_commands.extend([
+                    "enable",
+                    "configure terminal",
+                    "ip dhcp pool LAN_POOL",
+                    "default-router 192.168.1.1",
+                    "network 192.168.1.0 255.255.255.0",
+                    "end",
+                    "write memory"
+                ])
+                verification_commands.extend([
+                    "show ip dhcp pool",
+                    "show ip dhcp binding"
+                ])
+
+            elif "Default Gateway" in check_name or "gateway mismatch" in details_low:
+                steps.append("Reconfigure host default gateway address to match active router interface IP (10.0.1.1).")
+                ios_commands.extend([
+                    "ipconfig /setgateway 10.0.1.1"
+                ])
+                verification_commands.extend([
+                    "ipconfig /all",
+                    "ping 10.0.1.1"
+                ])
+
+            elif "Subnet Mask" in check_name or "subnet mask" in details_low:
+                steps.append("Reconfigure host subnet mask to match local router interface subnet mask.")
+                ios_commands.extend([
+                    "ipconfig /setmask 255.255.255.0"
+                ])
+                verification_commands.extend([
+                    "ipconfig /all"
+                ])
+
+            elif "Duplicate IP" in check_name or "duplicate ip" in details_low:
+                steps.append("Reconfigure host with a unique static IP address and clear router ARP cache.")
+                ios_commands.extend([
+                    "enable",
+                    "clear ip arp"
+                ])
+                verification_commands.extend([
+                    "show ip arp"
+                ])
+
+            elif "Interface Status" in check_name or "err-disabled" in details_low:
+                steps.append(f"Re-enable interface {iface_name} and clear err-disabled port security state.")
+                ios_commands.extend([
+                    "enable",
+                    "configure terminal",
+                    f"interface {iface_name}",
+                    "shutdown",
+                    "no shutdown",
+                    "end",
+                    "write memory"
+                ])
+                verification_commands.extend([
+                    "show interfaces status",
+                    "show ip interface brief"
+                ])
+
+            elif "ACL" in check_name or "access-group" in details_low:
+                steps.append("Update Access Control List to permit required traffic.")
+                ios_commands.extend([
+                    "enable",
+                    "configure terminal",
+                    "access-list 100 permit ip any any",
+                    "end",
+                    "write memory"
+                ])
+                verification_commands.extend([
+                    "show access-lists",
+                    "show ip interface"
+                ])
+
+            elif "Routing Protocol" in check_name or "ospf" in details_low:
+                steps.append("Configure missing network statement in routing protocol process.")
+                ios_commands.extend([
+                    "enable",
+                    "configure terminal",
+                    "router ospf 1",
+                    "network 10.0.0.0 0.255.255.255 area 0",
+                    "end",
+                    "write memory"
+                ])
+                verification_commands.extend([
+                    "show ip route",
+                    "show ip ospf neighbor"
+                ])
+
+            elif "NAT" in check_name or "nat inside" in details_low:
+                steps.append("Configure interface NAT inside/outside roles and translation rules.")
+                ios_commands.extend([
+                    "enable",
+                    "configure terminal",
+                    "interface GigabitEthernet0/0",
+                    "ip nat inside",
+                    "interface GigabitEthernet0/1",
+                    "ip nat outside",
+                    "end",
+                    "write memory"
+                ])
+                verification_commands.extend([
+                    "show ip nat translations",
+                    "show ip nat statistics"
+                ])
+
+            else:
+                steps.append(f"Remediate identified fault: {details}")
+                ios_commands.extend(["enable", "configure terminal", "end", "write memory"])
+                verification_commands.extend(["show running-config"])
+
+        unique_ios = list(dict.fromkeys(ios_commands))
+        unique_verif = list(dict.fromkeys(verification_commands))
+
+        return steps, unique_ios, unique_verif
+
+    def select_next_device_and_command(
+        self,
+        symptom: str,
+        show_outputs: str,
+        inventory: Optional[Dict[str, Any]] = None,
+        topology_note: str = "",
+        executed_history: Optional[List[Dict[str, Any]]] = None,
+        category: str = ""
+    ) -> tuple[str, str, str]:
+        return DiagnosticPlanner.plan_next_action(
+            symptom=symptom,
+            show_outputs=show_outputs,
+            inventory=inventory,
+            topology_note=topology_note,
+            executed_history=executed_history,
+            category=category
+        )
 
     def validate_schema(self, data: Dict[str, Any]) -> bool:
         if not isinstance(data, dict):
@@ -388,6 +619,7 @@ Output MUST be a single, valid JSON object with keys:
         return True
 
     def parse_llm_response(self, text: str) -> Optional[Dict[str, Any]]:
+
         clean_text = text.strip()
 
         if "```" in clean_text:
@@ -398,35 +630,9 @@ Output MUST be a single, valid JSON object with keys:
                 clean_text = re.sub(r"```[a-zA-Z]*", "", clean_text).strip()
 
         try:
-            parsed = json.loads(clean_text)
-            if self.validate_schema(parsed):
-                normalized = self.normalize_keys(parsed)
-                normalized.setdefault("status", "ISSUE_CONFIRMED" if normalized.get("confidence") == "High" else "NEED_MORE_EVIDENCE")
-                normalized.setdefault("next_device", "Switch1")
-                normalized.setdefault("reason_for_command", "Verify device configuration.")
-                return normalized
-        except (json.JSONDecodeError, TypeError):
-            pass
-
-        return None
-
-    def select_next_device_and_command(
-        self,
-        symptom: str,
-        show_outputs: str,
-        inventory: Optional[Dict[str, Any]] = None,
-        topology_note: str = "",
-        executed_history: Optional[List[Dict[str, Any]]] = None,
-        category: str = ""
-    ) -> tuple[str, str, str]:
-        return DiagnosticPlanner.plan_next_action(
-            symptom=symptom,
-            show_outputs=show_outputs,
-            inventory=inventory,
-            topology_note=topology_note,
-            executed_history=executed_history,
-            category=category
-        )
+            return json.loads(clean_text)
+        except Exception:
+            return None
 
     def diagnose_offline(self, case_info: Dict[str, Any], rule_results: List[Dict[str, Any]]) -> Dict[str, Any]:
         failed_rules = [r for r in rule_results if r.get("status") == "FAIL"]
@@ -484,11 +690,7 @@ Output MUST be a single, valid JSON object with keys:
             root_cause = "No issue detected in current CLI output. Continuing diagnostic checks."
             evidence = ["Current command evidence shows normal operation for inspected component."]
 
-        if failed_rules:
-            first_fail = failed_rules[0]
-            fix_steps = [f"Fix identified issue: {first_fail.get('details')}"]
-        else:
-            fix_steps = ["Review device configuration in Cisco Packet Tracer."]
+        fix_steps, ios_cmds, verif_cmds = self.generate_structured_remediation(failed_rules, case_info)
 
         diagnosis = {
             "status": status,
@@ -504,6 +706,8 @@ Output MUST be a single, valid JSON object with keys:
             "reason_for_command": reason_cmd,
             "fix_steps": fix_steps,
             "suggested_fix": fix_steps,
+            "ios_commands": ios_cmds,
+            "verification_commands": verif_cmds,
             "osi_layer": case_info.get("osi_layer", "Layer 2" if "vlan" in symptom.lower() or "trunk" in symptom.lower() else "Layer 3"),
             "concept": case_info.get("concept", "Native VLAN Mismatch" if has_native_mismatch else "General Network Fault"),
             "ai_mode": "Offline Demo"

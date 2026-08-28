@@ -1,0 +1,3 @@
+IP Address: 172.16.10.50
+Subnet Mask: 255.255.0.0
+Default Gateway: 172.16.10.1

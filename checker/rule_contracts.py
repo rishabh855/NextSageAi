@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Any, Callable
+from typing import Optional, List, Dict, Any, Callable, Tuple
 from checker.fact_extractor import FactContext, FactProvenance
 
 class RuleStatus(str, Enum):

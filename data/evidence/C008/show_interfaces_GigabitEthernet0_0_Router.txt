@@ -1,0 +1,2 @@
+GigabitEthernet0/0 is up, line protocol is up
+  Internet Address is 172.16.10.1/24, Extra Subnet 255.255.255.0

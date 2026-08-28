@@ -1,0 +1,2 @@
+FastEthernet0/1 is up, line protocol is down (err-disabled)
+  Port security violation count: 1

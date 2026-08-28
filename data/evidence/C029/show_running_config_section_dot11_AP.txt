@@ -1,0 +1,4 @@
+dot11 ssid Corporate_Wi-Fi
+   authentication open
+   authentication key-management wpa version 2
+   wpa-psk ascii SecretPass123!

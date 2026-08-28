@@ -1,0 +1,1 @@
+%CDP-4-NATIVE_VLAN_MISMATCH: Native VLAN mismatch discovered on GigabitEthernet0/1 (10), with Switch2 GigabitEthernet0/1 (1).

@@ -1,0 +1,3 @@
+GigabitEthernet0/1 is up, line protocol is up
+  Outbound access list is BLOCK_WEB
+  Inbound access list is not set

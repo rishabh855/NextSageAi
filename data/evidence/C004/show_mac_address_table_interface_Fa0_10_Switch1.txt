@@ -1,0 +1,3 @@
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+1       0050.7966.0001    DYNAMIC     Fa0/10

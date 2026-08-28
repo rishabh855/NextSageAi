@@ -1,0 +1,7 @@
+Port Security              : Enabled
+Port Status                : Secure-shutdown
+Violation Mode             : Shutdown
+Max Addresses              : 1
+Total Addresses            : 1
+Configured MAC Addresses   : 0010.a1b2.c3d4
+Last Source Address:Vlan   : 0050.7966.9999:10

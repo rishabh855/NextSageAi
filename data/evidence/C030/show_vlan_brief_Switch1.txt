@@ -1,0 +1,5 @@
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+1    default                          active    Gi0/1, Gi0/2
+10   Management                       active    Gi0/3
+ (VLAN 50 missing from switch database)

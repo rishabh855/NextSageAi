@@ -15,8 +15,9 @@ class TestEvidenceLoader(unittest.TestCase):
     def test_fallback_to_csv_evidence(self):
         # Case with no separate evidence directory
         fallback_text = "--- Default CSV Output ---"
-        evidence = load_case_evidence("C002", default_show_outputs=fallback_text)
+        evidence = load_case_evidence("NONEXISTENT_C999", default_show_outputs=fallback_text)
         self.assertEqual(evidence, fallback_text)
+
 
     def test_evidence_formatting(self):
         evidence = load_case_evidence("C001", default_show_outputs="")
