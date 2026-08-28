@@ -15,7 +15,7 @@ from dashboard.session_manager import SessionManager
 
 # Set Page Configuration
 st.set_page_config(
-    page_title="NetSage AI — AI-Assisted Network Troubleshooting",
+    page_title="NetSage AI — Network Diagnostic Console",
     page_icon="🔌",
     layout="wide"
 )
@@ -23,6 +23,359 @@ st.set_page_config(
 CASES_CSV_PATH = os.path.join("data", "cases.csv")
 LOG_CSV_PATH = os.path.join("data", "responsible_ai_log.csv")
 VERIF_CSV_PATH = os.path.join("data", "verification_log.csv")
+
+def inject_custom_css():
+    st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+code, kbd, pre, samp, textarea {
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+/* Base Canvas & Palette */
+.stApp {
+    background-color: #0a0e17;
+    color: #f8fafc;
+}
+
+/* Sidebar Styling */
+section[data-testid="stSidebar"] {
+    background-color: #0f172a !important;
+    border-right: 1px solid #1e293b !important;
+}
+
+section[data-testid="stSidebar"] * {
+    color: #f8fafc !important;
+}
+
+/* Header & Container Width */
+header[data-testid="stHeader"] {
+    background: transparent !important;
+}
+
+.block-container {
+    max-width: 1150px !important;
+    padding-top: 3.5rem !important;
+    padding-bottom: 2rem !important;
+}
+
+/* Technical Ops Console Header */
+.netsage-console-header {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-left: 4px solid #38bdf8;
+    border-radius: 6px;
+    padding: 0.85rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.netsage-console-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #38bdf8;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.netsage-console-subtitle {
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: #94a3b8;
+    font-size: 0.825rem;
+    font-weight: 400;
+    margin-top: 0.2rem;
+}
+
+.sys-tag {
+    font-family: 'JetBrains Mono', monospace;
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    margin-right: 0.4rem;
+}
+
+.sys-tag-active {
+    background: rgba(56, 189, 248, 0.1);
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+/* Persistent Priority-Tier Rail */
+.priority-rail-container {
+    display: flex;
+    gap: 6px;
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 1.25rem;
+}
+
+.priority-tier-box {
+    flex: 1;
+    background: #162032;
+    border: 1px solid #1e293b;
+    border-radius: 4px;
+    padding: 0.4rem 0.5rem;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.priority-tier-box.active-tier {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+}
+
+.priority-tier-box.active-tier-fail {
+    border-color: #f87171;
+    background: rgba(248, 113, 113, 0.12);
+}
+
+.priority-tier-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #cbd5e1;
+}
+
+.priority-tier-box.active-tier .priority-tier-code {
+    color: #38bdf8;
+}
+
+.priority-tier-box.active-tier-fail .priority-tier-code {
+    color: #f87171;
+}
+
+.priority-tier-name {
+    font-size: 0.65rem;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 0.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Technical Panels */
+.ops-panel {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 1.15rem 1.35rem;
+    margin-bottom: 1rem;
+}
+
+.ops-panel-header {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #f8fafc;
+    text-transform: uppercase;
+    margin-bottom: 0.85rem;
+    border-bottom: 1px solid #1e293b;
+    padding-bottom: 0.4rem;
+}
+
+/* Terminal Log View */
+.terminal-window {
+    background: #030712;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    line-height: 1.45;
+    height: 340px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}
+
+.terminal-line-prompt {
+    color: #38bdf8;
+    font-weight: 600;
+}
+
+.terminal-line-result {
+    color: #94a3b8;
+}
+
+/* Status Vocabulary Boxes */
+.status-vocab {
+    font-family: 'JetBrains Mono', monospace;
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.725rem;
+    font-weight: 700;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.status-vocab-fail {
+    background: rgba(248, 113, 113, 0.12);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.status-vocab-pass {
+    background: rgba(52, 211, 153, 0.12);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.status-vocab-evidence {
+    background: rgba(251, 191, 36, 0.12);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.status-vocab-na {
+    background: rgba(100, 116, 139, 0.12);
+    color: #94a3b8;
+    border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.status-vocab-suppressed {
+    background: rgba(71, 85, 105, 0.12);
+    color: #64748b;
+    border: 1px solid rgba(71, 85, 105, 0.3);
+    text-decoration: line-through;
+}
+
+/* Metrics */
+div[data-testid="stMetric"] {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 0.75rem 0.9rem;
+}
+
+div[data-testid="stMetricLabel"] {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    color: #64748b !important;
+    text-transform: uppercase;
+}
+
+div[data-testid="stMetricValue"] {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 1.35rem !important;
+    font-weight: 700 !important;
+    color: #f8fafc !important;
+}
+
+/* Minimal Tab Bar */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    background-color: transparent;
+    padding: 0 0 4px 0;
+    border-bottom: 1px solid #1e293b;
+    margin-bottom: 1rem;
+}
+
+.stTabs [data-baseweb="tab"] {
+    font-family: 'JetBrains Mono', monospace;
+    height: 36px;
+    border-radius: 0px;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0 12px;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+}
+
+.stTabs [aria-selected="true"] {
+    color: #38bdf8 !important;
+    border-bottom: 2px solid #38bdf8 !important;
+}
+
+/* Inputs & Form Control */
+.stTextInput label, .stTextArea label, .stSelectbox label {
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: #cbd5e1 !important;
+    font-weight: 600 !important;
+    font-size: 0.825rem !important;
+}
+
+.stTextInput>div>div>input, .stTextArea>div>div>textarea, .stSelectbox>div>div>div {
+    border-radius: 4px !important;
+    border: 1px solid #1e293b !important;
+    background-color: #030712 !important;
+    color: #f8fafc !important;
+    font-size: 0.85rem !important;
+}
+
+.stTextInput>div>div>input:focus, .stTextArea>div>div>textarea:focus {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 1px #38bdf8 !important;
+}
+
+/* Buttons */
+.stButton>button {
+    font-family: 'JetBrains Mono', monospace;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.825rem;
+    letter-spacing: 0.02em;
+    border: 1px solid #1e293b;
+}
+
+.stButton>button[kind="primary"] {
+    background: #0284c7;
+    color: #ffffff !important;
+    border: 1px solid #0369a1;
+}
+
+.stButton>button[kind="primary"]:hover {
+    background: #0369a1;
+    border-color: #075985;
+}
+</style>
+""", unsafe_allow_html=True)
+
+def render_priority_rail(active_tier: str = "P1"):
+    """
+    Renders the signature persistent priority-tier rail across the diagnostic console.
+    """
+    tiers = [
+        ("P1", "PHYSICAL / INTERFACE"),
+        ("P2", "TRUNKING / NATIVE VLAN"),
+        ("P3", "ACCESS VLAN / DATABASE"),
+        ("P4", "IP SUBNET / GATEWAY"),
+        ("P5", "ROUTING PROTOCOL"),
+        ("P6", "SERVICES / DHCP / ACL")
+    ]
+    
+    rail_html = '<div class="priority-rail-container">'
+    for code, name in tiers:
+        is_active = (code == active_tier)
+        css_class = "priority-tier-box active-tier-fail" if is_active else "priority-tier-box"
+        rail_html += f'''
+        <div class="{css_class}">
+            <div class="priority-tier-code">{code}</div>
+            <div class="priority-tier-name">{name}</div>
+        </div>
+        '''
+    rail_html += '</div>'
+    st.markdown(rail_html, unsafe_allow_html=True)
 
 @st.cache_data
 def load_cases(csv_path: str = CASES_CSV_PATH) -> pd.DataFrame:
@@ -89,247 +442,227 @@ def render_new_session_workflow(
     df_cases: pd.DataFrame
 ):
     """
-    Renders the Guided Network Investigation workflow.
+    Renders the Guided Network Investigation workflow in a 2-pane terminal console layout.
     """
-    st.subheader("🔎 Guided Network Investigation")
-    st.caption("Step-by-step assistant that selects target devices, recommends diagnostic commands, and analyzes CLI outputs.")
-
     existing_sessions = session_mgr.list_sessions()
-    col_s1, col_s2 = st.columns([2, 1])
 
-    with col_s2:
-        st.markdown("#### Session History")
-        if existing_sessions:
-            session_opts = [f"{s['session_id']} ({s.get('timestamp', '')}) - {s.get('symptom', '')[:30]}..." for s in existing_sessions]
-            selected_sess_opt = st.selectbox("Load Saved Session", ["Select a session..."] + session_opts)
-            if selected_sess_opt != "Select a session...":
-                selected_sess_id = selected_sess_opt.split(" ")[0]
-                st.session_state["active_session_id"] = selected_sess_id
-        else:
-            st.info("No saved sessions found. Create one on the left.")
-
-    with col_s1:
-        st.markdown("#### Start Guided Investigation")
+    # --- STEP 1 & INVENTORY SETUP CONTROL BLOCK ---
+    st.markdown('<div class="ops-panel">', unsafe_allow_html=True)
+    st.markdown('<div class="ops-panel-header">CONSOLE // START GUIDED DIAGNOSTIC SESSION</div>', unsafe_allow_html=True)
+    
+    col_inp1, col_inp2 = st.columns(2)
+    with col_inp1:
         symptom_input = st.text_input(
-            "Describe the symptom (Required)",
+            "SYMPTOM DESCRIPTION (REQUIRED)",
             placeholder="e.g. PC0 has an IP address but cannot ping the server.",
             key="input_symptom"
         )
         topology_input = st.text_input(
-            "Optional topology description",
-            placeholder="e.g. PC0 → Switch0 → Switch1 → Router0 → Server",
+            "TOPOLOGY PATH (OPTIONAL)",
+            placeholder="e.g. PC0 -> Switch0 -> Switch1 -> Router0 -> Server",
             key="input_topology"
         )
-
+    with col_inp2:
         case_id_opts = ["None (Unlinked)"] + [c for c in df_cases["case_id"].unique() if c] if not df_cases.empty else ["None (Unlinked)"]
-        selected_case_link = st.selectbox("Optional Link to Dataset Case ID", case_id_opts, key="input_case_link")
+        selected_case_link = st.selectbox("LINK BENCHMARK CASE ID", case_id_opts, key="input_case_link")
+        
+        if existing_sessions:
+            session_opts = [f"{s['session_id']} - {s.get('symptom', '')[:30]}..." for s in existing_sessions]
+            selected_sess_opt = st.selectbox("LOAD RECENT SESSION", ["None (New Session)"] + session_opts, key="select_saved_session_dd")
+            if selected_sess_opt != "None (New Session)":
+                selected_sess_id = selected_sess_opt.split(" - ")[0]
+                if st.session_state.get("active_session_id") != selected_sess_id:
+                    st.session_state["active_session_id"] = selected_sess_id
+                    st.session_state["session_rule_results"] = None
+                    st.session_state["session_ai_diagnosis"] = None
+                    st.rerun()
 
-        # --- SECTION 1: NETWORK INVENTORY UI ---
-        st.markdown("##### 🌐 Network Inventory")
-        inv_col1, inv_col2, inv_col3, inv_col4 = st.columns(4)
+    st.markdown('<div style="margin-top: 0.5rem; font-family: \'JetBrains Mono\', monospace; font-size: 0.75rem; color: #94a3b8;">NETWORK INVENTORY COUNTS & HOSTNAMES</div>', unsafe_allow_html=True)
+    
+    inv_col1, inv_col2, inv_col3, inv_col4 = st.columns(4)
+    with inv_col1:
+        ed_count = st.selectbox("END DEVICES", list(range(0, 21)), index=2, key="inv_ed_count")
+        ed_names_str = st.text_input("HOSTNAMES", value="PC0, PC1", key="inv_ed_names")
+    with inv_col2:
+        sw_count = st.selectbox("SWITCHES", list(range(0, 21)), index=2, key="inv_sw_count")
+        sw_names_str = st.text_input("SWITCH NAMES", value="Switch0, Switch1", key="inv_sw_names")
+    with inv_col3:
+        rt_count = st.selectbox("ROUTERS", list(range(0, 21)), index=1, key="inv_rt_count")
+        rt_names_str = st.text_input("ROUTER NAMES", value="Router0", key="inv_rt_names")
+    with inv_col4:
+        wl_count = st.selectbox("WIRELESS", list(range(0, 21)), index=0, key="inv_wl_count")
+        wl_names_str = st.text_input("AP NAMES", value="", key="inv_wl_names")
 
-        with inv_col1:
-            ed_count = st.selectbox("End Devices", list(range(0, 21)), index=2, key="inv_ed_count")
-            ed_names_str = st.text_input("End Device Names", value="PC0, PC1", key="inv_ed_names")
-        with inv_col2:
-            sw_count = st.selectbox("Switches", list(range(0, 21)), index=2, key="inv_sw_count")
-            sw_names_str = st.text_input("Switch Names", value="Switch0, Switch1", key="inv_sw_names")
-        with inv_col3:
-            rt_count = st.selectbox("Routers", list(range(0, 21)), index=1, key="inv_rt_count")
-            rt_names_str = st.text_input("Router Names", value="Router0", key="inv_rt_names")
-        with inv_col4:
-            wl_count = st.selectbox("Wireless Devices", list(range(0, 21)), index=0, key="inv_wl_count")
-            wl_names_str = st.text_input("Wireless Names", value="", key="inv_wl_names")
+    st.markdown('<div style="margin-top: 0.75rem;"></div>', unsafe_allow_html=True)
 
-        if st.button("🔎 Start Guided Investigation", type="primary", key="btn_start_guided_session"):
-            if not symptom_input or not symptom_input.strip():
-                st.error("Please enter a symptom description before starting an investigation.")
-            else:
-                linked_id = selected_case_link if selected_case_link != "None (Unlinked)" else None
-                
-                # Format inventory lists
-                inventory_data = {
-                    "end_devices_count": ed_count,
-                    "switches_count": sw_count,
-                    "routers_count": rt_count,
-                    "wireless_count": wl_count,
-                    "end_devices": [x.strip() for x in ed_names_str.split(",") if x.strip()] or [f"PC{i}" for i in range(ed_count)],
-                    "switches": [x.strip() for x in sw_names_str.split(",") if x.strip()] or [f"Switch{i}" for i in range(sw_count)],
-                    "routers": [x.strip() for x in rt_names_str.split(",") if x.strip()] or [f"Router{i}" for i in range(rt_count)],
-                    "wireless": [x.strip() for x in wl_names_str.split(",") if x.strip()] or [f"AP{i}" for i in range(wl_count)]
-                }
+    if st.button("INITIALIZE DIAGNOSTIC SESSION", type="primary", key="btn_start_guided_session", use_container_width=True):
+        if not symptom_input or not symptom_input.strip():
+            st.error("Symptom description is required to initialize session.")
+        else:
+            linked_id = selected_case_link if selected_case_link != "None (Unlinked)" else None
+            inventory_data = {
+                "end_devices_count": ed_count,
+                "switches_count": sw_count,
+                "routers_count": rt_count,
+                "wireless_count": wl_count,
+                "end_devices": [x.strip() for x in ed_names_str.split(",") if x.strip()] or [f"PC{i}" for i in range(ed_count)],
+                "switches": [x.strip() for x in sw_names_str.split(",") if x.strip()] or [f"Switch{i}" for i in range(sw_count)],
+                "routers": [x.strip() for x in rt_names_str.split(",") if x.strip()] or [f"Router{i}" for i in range(rt_count)],
+                "wireless": [x.strip() for x in wl_names_str.split(",") if x.strip()] or [f"AP{i}" for i in range(wl_count)]
+            }
 
-                sess = session_mgr.create_session(
-                    symptom=symptom_input,
-                    topology=topology_input,
-                    case_id=linked_id,
-                    inventory=inventory_data
-                )
-                st.session_state["active_session_id"] = sess["session_id"]
-                st.session_state["session_rule_results"] = None
-                st.session_state["session_ai_diagnosis"] = None
-                st.success(f"Started Guided Session **{sess['session_id']}**! Saved to `data/evidence/sessions/{sess['session_id']}/`")
-                st.rerun()
+            sess = session_mgr.create_session(
+                symptom=symptom_input,
+                topology=topology_input,
+                case_id=linked_id,
+                inventory=inventory_data
+            )
+            st.session_state["active_session_id"] = sess["session_id"]
+            st.session_state["session_rule_results"] = None
+            st.session_state["session_ai_diagnosis"] = None
+            st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     active_session_id = st.session_state.get("active_session_id")
     if not active_session_id:
-        st.info("💡 Enter network inventory and symptom above, then click **🔎 Start Guided Investigation** to begin.")
         return
 
     session_data = session_mgr.get_session(active_session_id)
     if not session_data:
-        st.error(f"Error loading active session `{active_session_id}`.")
+        st.error(f"Error loading session `{active_session_id}`.")
         return
 
     st.markdown("---")
 
-    # --- ACTIVE SESSION HEADER & INVENTORY SUMMARY ---
-    st.subheader(f"📌 Active Session: `{session_data['session_id']}`")
-    st.markdown(f"**Symptom:** {session_data.get('symptom')}")
-    if session_data.get("topology"):
-        st.markdown(f"**Topology:** `{session_data.get('topology')}`")
-    
-    inv = session_data.get("network_inventory", {})
-    st.markdown(
-        f"🌐 **Inventory:** `End Devices ({inv.get('end_devices_count', 0)}): {', '.join(inv.get('end_devices', []))}` | "
-        f"`Switches ({inv.get('switches_count', 0)}): {', '.join(inv.get('switches', []))}` | "
-        f"`Routers ({inv.get('routers_count', 0)}): {', '.join(inv.get('routers', []))}`"
-    )
-
-    evidence_list = session_data.get("evidence_list", [])
+    # --- TWO-PANE TERMINAL CONSOLE WORKSPACE ---
     investigation_status = session_data.get("investigation_status", "ACTIVE")
     current_step = session_data.get("current_step", 1)
     current_device = session_data.get("current_device", "Router0")
     current_command = session_data.get("current_command", "show ip interface brief")
     reason_for_command = session_data.get("reason_for_command", "Inspect interface status.")
 
-    # --- SECTION 3: GUIDED COMMAND RECOMMENDATION BANNER ---
-    if investigation_status == "ACTIVE":
-        st.markdown("### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        st.markdown(f"### 🔎 Investigation Step {current_step}")
-        st.markdown("### ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    pane_left, pane_right = st.columns([1, 1])
 
-        b_col1, b_col2 = st.columns([1, 2])
-        with b_col1:
-            st.info(f"📍 **Device to Open in Packet Tracer:**\n### `{current_device}`")
-        with b_col2:
-            st.success(f"▶️ **Run this exact command:**\n```text\n{current_command}\n```")
-            st.caption(f"💡 **Reason:** {reason_for_command}")
+    # --- LEFT PANE: ACCUMULATED TERMINAL EVIDENCE LOG ---
+    with pane_left:
+        st.markdown('<div class="ops-panel">', unsafe_allow_html=True)
+        st.markdown(f'<div class="ops-panel-header">TERMINAL EVIDENCE LOG // SESSION {active_session_id}</div>', unsafe_allow_html=True)
 
-        st.markdown("---")
+        inv_history = session_data.get("investigation_history", [])
+        term_text = f"// NETSAGE DIAGNOSTIC CONSOLE v2.0\n// SESSION: {active_session_id}\n// SYMPTOM: {session_data.get('symptom')}\n\n"
+        
+        if inv_history:
+            for h in inv_history:
+                term_text += f"[STEP {h.get('step')}] DEVICE: {h.get('device')} | CMD: {h.get('command')}\n"
+                term_text += f"RESULT: {h.get('result_summary')}\n----------------------------------------\n"
+        else:
+            term_text += "[SYSTEM] Session initialized. Awaiting Step 1 CLI output submission...\n"
 
-        # --- SECTION 4: CLI EVIDENCE INPUT ---
-        st.markdown("### 📄 Submit Command CLI Output")
+        st.markdown(f'<div class="terminal-window">{term_text}</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        e_col1, e_col2 = st.columns(2)
-        with e_col1:
-            dev_input = st.text_input("Device Name", value=current_device, key=f"dev_in_{active_session_id}_{current_step}")
-        with e_col2:
-            cmd_input = st.text_input("Command Executed", value=current_command, key=f"cmd_in_{active_session_id}_{current_step}")
+    # --- RIGHT PANE: TARGET COMMAND & EVIDENCE SUBMISSION ---
+    with pane_right:
+        st.markdown('<div class="ops-panel">', unsafe_allow_html=True)
+        st.markdown(f'<div class="ops-panel-header">STEP {current_step} // TARGET COMMAND & SUBMISSION</div>', unsafe_allow_html=True)
 
-        cli_text_input = st.text_area(
-            "Copy complete CLI output from Packet Tracer and paste below",
-            placeholder="Paste output from Packet Tracer CLI here...",
-            height=180,
-            key=f"cli_in_{active_session_id}_{current_step}"
-        )
+        if investigation_status == "ACTIVE":
+            st.markdown(
+                f'<div style="font-family: \'JetBrains Mono\', monospace; font-size: 0.8rem; margin-bottom: 0.5rem;">'
+                f'TARGET DEVICE: <span style="color: #38bdf8; font-weight: 700;">{current_device}</span><br>'
+                f'RECOMMENDED COMMAND: <span style="color: #34d399; font-weight: 700;">{current_command}</span>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+            st.caption(f"REASON: {reason_for_command}")
 
-        if st.button("➕ Submit Evidence & Continue Investigation", type="primary", key=f"btn_sub_ev_{active_session_id}_{current_step}"):
-            if not cli_text_input or not cli_text_input.strip():
-                st.error("Please paste the CLI output before submitting.")
-            else:
-                session_mgr.add_evidence(
-                    session_id=active_session_id,
-                    cli_output=cli_text_input,
-                    command=cmd_input,
-                    device=dev_input
-                )
+            dev_input = st.text_input("EXECUTING DEVICE", value=current_device, key=f"dev_in_{active_session_id}_{current_step}")
+            cmd_input = st.text_input("EXECUTED COMMAND", value=current_command, key=f"cmd_in_{active_session_id}_{current_step}")
 
-                # Re-analyze all accumulated evidence
-                accumulated_evidence = session_mgr.get_accumulated_evidence(active_session_id)
-                checker = RuleChecker()
-                rule_res = checker.run_all_checks(accumulated_evidence)
+            cli_text_input = st.text_area(
+                "PASTE CLI SHOW OUTPUT FROM PACKET TRACER",
+                placeholder="Copy CLI terminal output from Packet Tracer and paste here...",
+                height=140,
+                key=f"cli_in_{active_session_id}_{current_step}"
+            )
 
-                engine = AIDiagnosisEngine()
-                session_case_info = {
-                    "case_id": active_session_id,
-                    "category": "General",
-                    "symptom": session_data.get("symptom", ""),
-                    "topology_note": session_data.get("topology", ""),
-                    "network_inventory": inv,
-                    "show_outputs": accumulated_evidence,
-                    "investigation_history": session_data.get("investigation_history", [])
-                }
-                diag = engine.diagnose(session_case_info, rule_res)
-                st.session_state["session_rule_results"] = rule_res
-                st.session_state["session_ai_diagnosis"] = diag
-
-                diag_status = diag.get("status", "NO_CONFIRMED_ISSUE")
-
-                if diag_status == "ISSUE_CONFIRMED":
-                    session_mgr.update_investigation_state(
-                        session_id=active_session_id,
-                        state="ISSUE_CONFIRMED",
-                        result_summary=f"🚨 Issue Confirmed: {diag.get('root_cause')}",
-                        investigation_status="STOPPED"
-                    )
-                    st.success("🚨 Fault Confirmed! Investigation complete.")
-                elif diag_status == "NEED_MORE_EVIDENCE":
-                    session_mgr.update_investigation_state(
-                        session_id=active_session_id,
-                        state="NEED_MORE_EVIDENCE",
-                        next_device=diag.get("next_device", current_device),
-                        next_command=diag.get("next_command", "show running-config"),
-                        reason_for_command=diag.get("reason_for_command", "Additional evidence required to confirm root cause."),
-                        result_summary=f"🟡 Suspicion: {diag.get('root_cause')}"
-                    )
-                    st.warning("🟡 Possible issue detected — requesting follow-up evidence.")
+            if st.button("SUBMIT CLI EVIDENCE & EVALUATE", type="primary", key=f"btn_sub_ev_{active_session_id}_{current_step}", use_container_width=True):
+                if not cli_text_input or not cli_text_input.strip():
+                    st.error("CLI output payload is empty.")
                 else:
-                    next_cmd = diag.get("next_command", "")
-                    next_dev = diag.get("next_device", "")
-                    if not next_cmd:
+                    session_mgr.add_evidence(
+                        session_id=active_session_id,
+                        cli_output=cli_text_input,
+                        command=cmd_input,
+                        device=dev_input
+                    )
+
+                    accumulated_evidence = session_mgr.get_accumulated_evidence(active_session_id)
+                    checker = RuleChecker()
+                    rule_res = checker.run_all_checks(accumulated_evidence)
+
+                    engine = AIDiagnosisEngine()
+                    session_case_info = {
+                        "case_id": active_session_id,
+                        "category": "General",
+                        "symptom": session_data.get("symptom", ""),
+                        "topology_note": session_data.get("topology", ""),
+                        "network_inventory": session_data.get("network_inventory", {}),
+                        "show_outputs": accumulated_evidence,
+                        "investigation_history": session_data.get("investigation_history", [])
+                    }
+                    diag = engine.diagnose(session_case_info, rule_res)
+                    st.session_state["session_rule_results"] = rule_res
+                    st.session_state["session_ai_diagnosis"] = diag
+
+                    diag_status = diag.get("status", "NO_CONFIRMED_ISSUE")
+
+                    if diag_status == "ISSUE_CONFIRMED":
                         session_mgr.update_investigation_state(
                             session_id=active_session_id,
-                            state="NO_CONFIRMED_ISSUE",
-                            next_device="",
-                            next_command="",
-                            reason_for_command="Standard diagnostic checks completed. No further commands remain. Manual review recommended.",
-                            result_summary="🛑 Standard diagnostic checks completed. No further commands remain.",
+                            state="ISSUE_CONFIRMED",
+                            result_summary=f"CONFIRMED FAULT: {diag.get('root_cause')}",
                             investigation_status="STOPPED"
                         )
-                        st.info("🛑 Standard diagnostic checks completed. No further commands remain. Manual review recommended.")
-                    else:
+                    elif diag_status == "NEED_MORE_EVIDENCE":
                         session_mgr.update_investigation_state(
                             session_id=active_session_id,
-                            state="NO_CONFIRMED_ISSUE",
-                            next_device=next_dev,
-                            next_command=next_cmd,
-                            reason_for_command=diag.get("reason_for_command", "No issue detected in check. Moving to next diagnostic check."),
-                            result_summary="✅ No issue detected in this check."
+                            state="NEED_MORE_EVIDENCE",
+                            next_device=diag.get("next_device", current_device),
+                            next_command=diag.get("next_command", "show running-config"),
+                            reason_for_command=diag.get("reason_for_command", "Follow-up evidence required."),
+                            result_summary=f"SUSPICION: {diag.get('root_cause')}"
                         )
-                        st.info("✅ No issue detected in check. Advancing to next diagnostic step.")
-                
-                st.rerun()
-
-    else:
-        if session_data.get("investigation_state") == "ISSUE_CONFIRMED":
-            st.success("🛑 **Investigation Complete — Issue Confirmed**")
+                    else:
+                        next_cmd = diag.get("next_command", "")
+                        next_dev = diag.get("next_device", "")
+                        if not next_cmd:
+                            session_mgr.update_investigation_state(
+                                session_id=active_session_id,
+                                state="NO_CONFIRMED_ISSUE",
+                                next_device="",
+                                next_command="",
+                                reason_for_command="Standard diagnostic checks complete.",
+                                result_summary="NO FAULT CONFIRMED in standard checks.",
+                                investigation_status="STOPPED"
+                            )
+                        else:
+                            session_mgr.update_investigation_state(
+                                session_id=active_session_id,
+                                state="NO_CONFIRMED_ISSUE",
+                                next_device=next_dev,
+                                next_command=next_cmd,
+                                reason_for_command=diag.get("reason_for_command", "No issue in current check."),
+                                result_summary="PASS: No issue detected in current check."
+                            )
+                    st.rerun()
         else:
-            st.info("🛑 **Standard diagnostic checks completed. No further commands remain. Manual review recommended.**")
+            st.markdown('<div class="status-vocab status-vocab-pass">SESSION COMPLETE — INVESTIGATION CONCLUDED</div>', unsafe_allow_html=True)
+            st.caption("Standard diagnostic checks completed or fault pinpointed.")
 
-    st.markdown("---")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- SECTION 8: INVESTIGATION HISTORY TIMELINE ---
-    inv_history = session_data.get("investigation_history", [])
-    if inv_history:
-        st.markdown("### 🔎 Investigation History Timeline")
-        for h in inv_history:
-            st.markdown(
-                f"**Step {h.get('step')}** | 📍 `{h.get('device')}` | Command: `{h.get('command')}` | **Result:** {h.get('result_summary')}"
-            )
-        st.markdown("---")
-
-    # --- SECTION 9 & 10: DIAGNOSIS & STOP CONDITION ---
+    # --- SECTION 3: DIAGNOSTIC ANALYSIS & CITATIONS ---
     accumulated_evidence = session_mgr.get_accumulated_evidence(active_session_id)
     if st.session_state.get("session_ai_diagnosis") is None and accumulated_evidence:
         checker = RuleChecker()
@@ -342,64 +675,70 @@ def render_new_session_workflow(
             "category": "General",
             "symptom": session_data.get("symptom", ""),
             "topology_note": session_data.get("topology", ""),
-            "network_inventory": inv,
+            "network_inventory": session_data.get("network_inventory", {}),
             "show_outputs": accumulated_evidence
         }
         st.session_state["session_ai_diagnosis"] = engine.diagnose(session_case_info, rule_res)
 
     diag = st.session_state.get("session_ai_diagnosis")
     if diag:
-        st.markdown("### 🤖 Diagnostic Analysis")
-        
+        st.markdown('<div class="ops-panel">', unsafe_allow_html=True)
+        st.markdown('<div class="ops-panel-header">DIAGNOSTIC ANALYSIS // DETERMINISTIC FINDINGS</div>', unsafe_allow_html=True)
+
+        # Highlight Tier on Persistent Rail
+        osi_val = diag.get("osi_layer", "Layer 2")
+        tier_code = "P1"
+        if "3" in osi_val or "Network" in osi_val:
+            tier_code = "P4"
+        elif "VLAN" in diag.get("root_cause", "") or "Trunk" in diag.get("root_cause", ""):
+            tier_code = "P2"
+        elif "Routing" in diag.get("root_cause", ""):
+            tier_code = "P5"
+        elif "DHCP" in diag.get("root_cause", "") or "ACL" in diag.get("root_cause", ""):
+            tier_code = "P6"
+
+        render_priority_rail(tier_code)
+
         diag_state = diag.get("status", "NO_CONFIRMED_ISSUE")
         if diag_state == "ISSUE_CONFIRMED":
-            st.error("🚨 **ISSUE CONFIRMED — Root Cause Pinpointed**")
+            st.markdown(f'<div class="status-vocab status-vocab-fail">CONFIRMED FAULT [{tier_code}]</div>', unsafe_allow_html=True)
         elif diag_state == "NEED_MORE_EVIDENCE":
-            st.warning("🟡 **NEED MORE EVIDENCE — Possible Anomaly Detected**")
+            st.markdown(f'<div class="status-vocab status-vocab-evidence">NEED MORE EVIDENCE [{tier_code}]</div>', unsafe_allow_html=True)
         else:
-            st.info("✅ **NO CONFIRMED ISSUE — Continuing Diagnostics**")
+            st.markdown(f'<div class="status-vocab status-vocab-pass">CLEAR / NO FAULT CONFIRMED</div>', unsafe_allow_html=True)
 
-        conf = diag.get("confidence", "Medium")
-        if conf == "High":
-            st.markdown(f"**Confidence:** :green[{conf}]")
-        elif conf == "Medium":
-            st.markdown(f"**Confidence:** :orange[{conf}]")
-        else:
-            st.markdown(f"**Confidence:** :red[{conf}]")
-
-        st.markdown(f"**Root Cause / Suspicion:** {diag.get('root_cause')}")
-
-        st.markdown("**Cited Evidence:**")
+        st.markdown(f"**PRIMARY FAILURE CLAIM:** {diag.get('root_cause')}")
+        
+        # Evidence Citations DIRECTLY UNDER Claim
+        st.markdown("**EVIDENCE CITATIONS:**")
         for ev in diag.get("evidence", []):
-            st.markdown(f"- `{ev}`")
+            st.markdown(f"↳ `<span style='color: #38bdf8; font-family: monospace;'>{ev}</span>`", unsafe_allow_html=True)
 
-        st.markdown("**Suggested Fix Steps:**")
-        for step in diag.get("fix_steps", []):
-            st.markdown(f"1. {step}")
+        st.markdown(f"**RECOMMENDED FIX PROCEDURE:**")
+        for idx, step in enumerate(diag.get("fix_steps", []), 1):
+            st.markdown(f"{idx}. `{step}`")
 
-        st.markdown(f"**OSI Layer:** `{diag.get('osi_layer')}` | **Concept Tag:** `{diag.get('concept')}`")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        # --- SECTION 10 & 11: HUMAN REVIEW & FIX VERIFICATION ---
-        st.markdown("---")
-        st.subheader("👩‍💻 Human Reviewer Oversight & Decision")
-        st.info("Inspect the AI diagnosis and cited evidence above, then record your decision.")
+        # --- SECTION 4: RESPONSIBLE AI REVIEW & OVERSIGHT ---
+        st.markdown('<div class="ops-panel">', unsafe_allow_html=True)
+        st.markdown('<div class="ops-panel-header">HUMAN REVIEWER OVERSIGHT // DECISION CONTROL</div>', unsafe_allow_html=True)
 
         existing_review = review_mgr.get_review_for_case(active_session_id)
         if existing_review:
-            st.success(
-                f"📋 **Existing Human Review Saved** [{existing_review.get('timestamp')}]\n\n"
-                f"**Decision:** `{existing_review.get('human_decision')}` | "
-                f"**Log ID:** `{existing_review.get('log_id')}`\n\n"
-                f"**Corrected Diagnosis / Notes:** {existing_review.get('corrected_diagnosis')}\n\n"
-                f"**Reason / Rationale:** {existing_review.get('reason_for_correction')}"
+            st.markdown(
+                f'<div class="status-vocab status-vocab-pass">RECORDED DECISION: {existing_review.get("human_decision")}</div> '
+                f'<span style="font-family: monospace; font-size: 0.8rem; color: #94a3b8;">LOG ID: {existing_review.get("log_id")}</span>',
+                unsafe_allow_html=True
             )
+            st.markdown(f"**NOTES:** {existing_review.get('reason_for_correction')}")
 
-        review_tab1, review_tab2, review_tab3 = st.tabs(["✅ Accept AI Diagnosis", "✏️ Edit Diagnosis", "❌ Reject Diagnosis"])
+        st.markdown("Select Decision Mode:")
+        rev_mode = st.radio("Review Mode", ["ACCEPT DIAGNOSIS", "EDIT DIAGNOSIS", "REJECT DIAGNOSIS"], horizontal=True, key=f"rev_mode_radio_{active_session_id}")
 
-        with review_tab1:
-            st.markdown("#### Accept Diagnosis")
-            accept_comments = st.text_area("Optional Reviewer Comments / Verification Notes", key=f"guided_accept_notes_{active_session_id}")
-            if st.button("Submit Decision: ACCEPT", type="primary", key=f"guided_btn_accept_{active_session_id}"):
+        if rev_mode == "ACCEPT DIAGNOSIS":
+            accept_notes = st.text_area("OPTIONAL REVIEWER VERIFICATION COMMENTS", key=f"guided_acc_notes_{active_session_id}")
+            if st.button("RECORD ACCEPT DECISION", type="primary", key=f"guided_btn_acc_{active_session_id}"):
                 initial_diag_text = f"Root Cause: {diag.get('root_cause')} | Fix: {'; '.join(diag.get('fix_steps', []))}"
                 res = review_mgr.record_review(
                     case_id=active_session_id,
@@ -408,21 +747,16 @@ def render_new_session_workflow(
                     ai_confidence=diag.get("confidence", "Medium"),
                     human_decision="Accept",
                     corrected_diagnosis=initial_diag_text,
-                    reason_for_correction=accept_comments or "Accepted by reviewer after guided evidence inspection."
+                    reason_for_correction=accept_notes or "Accepted by reviewer after evidence inspection."
                 )
                 if res.get("success"):
-                    st.success(f"✅ Decision recorded in `data/responsible_ai_log.csv` as **LOG ID: {res['record']['log_id']}**")
                     st.rerun()
-                else:
-                    st.error(res.get("error"))
 
-        with review_tab2:
-            st.markdown("#### Edit / Correct Diagnosis")
+        elif rev_mode == "EDIT DIAGNOSIS":
             default_edit_text = f"Root Cause: {diag.get('root_cause')}"
-            edited_diag = st.text_area("Corrected Diagnosis (Required)", value=default_edit_text, key=f"guided_edit_text_{active_session_id}")
-            edit_reason = st.text_area("Reason for Correction (Required)", placeholder="Explain why the AI diagnosis required correction...", key=f"guided_edit_reason_{active_session_id}")
-
-            if st.button("Submit Decision: EDIT", type="primary", key=f"guided_btn_edit_{active_session_id}"):
+            edited_diag = st.text_area("CORRECTED DIAGNOSIS (REQUIRED)", value=default_edit_text, key=f"guided_edit_text_{active_session_id}")
+            edit_reason = st.text_area("REASON FOR CORRECTION (REQUIRED)", placeholder="Explain rationale...", key=f"guided_edit_reason_{active_session_id}")
+            if st.button("RECORD EDIT DECISION", type="primary", key=f"guided_btn_edt_{active_session_id}"):
                 initial_diag_text = f"Root Cause: {diag.get('root_cause')} | Fix: {'; '.join(diag.get('fix_steps', []))}"
                 res = review_mgr.record_review(
                     case_id=active_session_id,
@@ -434,16 +768,11 @@ def render_new_session_workflow(
                     reason_for_correction=edit_reason
                 )
                 if res.get("success"):
-                    st.success(f"✏️ Correction recorded in `data/responsible_ai_log.csv` as **LOG ID: {res['record']['log_id']}**")
                     st.rerun()
-                else:
-                    st.error(res.get("error"))
 
-        with review_tab3:
-            st.markdown("#### Reject Diagnosis")
-            reject_reason = st.text_area("Rejection Reason (Required)", placeholder="Specify why this AI diagnosis is rejected...", key=f"guided_reject_reason_{active_session_id}")
-
-            if st.button("Submit Decision: REJECT", type="primary", key=f"guided_btn_reject_{active_session_id}"):
+        else:
+            reject_reason = st.text_area("REJECTION REASON (REQUIRED)", placeholder="Explain why rejected...", key=f"guided_reject_reason_{active_session_id}")
+            if st.button("RECORD REJECT DECISION", type="primary", key=f"guided_btn_rej_{active_session_id}"):
                 initial_diag_text = f"Root Cause: {diag.get('root_cause')} | Fix: {'; '.join(diag.get('fix_steps', []))}"
                 res = review_mgr.record_review(
                     case_id=active_session_id,
@@ -455,407 +784,178 @@ def render_new_session_workflow(
                     reason_for_correction=reject_reason
                 )
                 if res.get("success"):
-                    st.error(f"❌ Rejection logged in `data/responsible_ai_log.csv` as **LOG ID: {res['record']['log_id']}**")
                     st.rerun()
-                else:
-                    st.error(res.get("error"))
 
-        st.markdown("---")
-        st.subheader("🔧 Fix & Verification Workflow")
-        st.info("ℹ️ **NetSage does not control Cisco Packet Tracer. Apply the recommended fix manually in Packet Tracer.**")
-
-        existing_verif = verif_mgr.get_verification_for_case(active_session_id)
-        if existing_verif:
-            st.success(
-                f"📋 **Existing Verification Record** [{existing_verif.get('timestamp')}]\n\n"
-                f"**Result:** `{existing_verif.get('verification_result')}` | "
-                f"**Before:** `{existing_verif.get('before_status')}` ➔ **After:** `{existing_verif.get('after_status')}`\n\n"
-                f"**Verification Notes:** {existing_verif.get('verification_notes')}"
-            )
-
-        v_col1, v_col2, v_col3 = st.columns(3)
-        with v_col1:
-            before_status = st.selectbox("Before Fix Connectivity", ["FAIL", "PASS", "NOT_TESTED"], key=f"guided_v_before_{active_session_id}")
-        with v_col2:
-            after_status = st.selectbox("After Fix Connectivity", ["PASS", "FAIL", "NOT_TESTED"], key=f"guided_v_after_{active_session_id}")
-        with v_col3:
-            verif_result = st.selectbox("Final Verification Result", ["RESOLVED", "NOT_RESOLVED", "NOT_TESTED"], key=f"guided_v_res_{active_session_id}")
-
-        verif_notes = st.text_area(
-            "Verification Notes & Test Evidence (Required for RESOLVED / NOT_RESOLVED)",
-            placeholder="Document manual ping results or CLI verification outputs from Packet Tracer...",
-            key=f"guided_v_notes_{active_session_id}"
-        )
-
-        if st.button("Submit Fix Verification Record", type="primary", key=f"guided_btn_verif_{active_session_id}"):
-            res_v = verif_mgr.record_verification(
-                case_id=active_session_id,
-                before_status=before_status,
-                after_status=after_status,
-                verification_result=verif_result,
-                verification_notes=verif_notes
-            )
-            if res_v.get("success"):
-                st.success(f"✅ Verification record saved in `data/verification_log.csv` as **LOG ID: {res_v['record']['log_id']}**")
-                st.rerun()
-            else:
-                st.error(res_v.get("error"))
+        st.markdown('</div>', unsafe_allow_html=True)
 
 def render_case_explorer_workflow(
     df_cases: pd.DataFrame,
     review_mgr: ReviewManager,
     verif_mgr: VerificationManager
 ):
-    st.sidebar.header("🔍 Case Explorer Filters")
+    """
+    Renders the Case Explorer screen as a scannable technical table of 35 benchmark cases.
+    """
+    st.sidebar.markdown('<div style="font-family: \'JetBrains Mono\', monospace; font-weight: 700; font-size: 0.85rem; color: #38bdf8; margin-bottom: 0.5rem;">FILTER BENCHMARK DATASET</div>', unsafe_allow_html=True)
 
     categories = ["All"] + sorted([c for c in df_cases["category"].unique() if c])
     severities = ["All"] + sorted([s for s in df_cases["severity"].unique() if s])
     osi_layers = ["All"] + sorted([l for l in df_cases["osi_layer"].unique() if l])
     statuses = ["All"] + sorted([st_val for st_val in df_cases["evidence_status"].unique() if st_val])
 
-    sel_category = st.sidebar.selectbox("Category", categories)
-    sel_severity = st.sidebar.selectbox("Severity", severities)
-    sel_osi = st.sidebar.selectbox("OSI Layer", osi_layers)
-    sel_status = st.sidebar.selectbox("Evidence Status", statuses)
+    sel_category = st.sidebar.selectbox("CATEGORY", categories)
+    sel_severity = st.sidebar.selectbox("SEVERITY", severities)
+    sel_osi = st.sidebar.selectbox("OSI LAYER", osi_layers)
+    sel_status = st.sidebar.selectbox("EVIDENCE STATUS", statuses)
 
     filtered_df = filter_cases(df_cases, sel_category, sel_severity, sel_osi, sel_status)
+    st.sidebar.markdown(f"**MATCHING RECORD COUNT:** `{len(filtered_df)}` / `{len(df_cases)}`")
 
-    st.sidebar.markdown(f"**Matching Cases:** `{len(filtered_df)}` / `{len(df_cases)}`")
+    st.markdown('<div class="ops-panel">', unsafe_allow_html=True)
+    st.markdown('<div class="ops-panel-header">CASE EXPLORER // BENCHMARK LAB DATASET (35 CASES)</div>', unsafe_allow_html=True)
 
     if filtered_df.empty:
-        st.warning("No cases match the selected filters. Please adjust your criteria.")
+        st.warning("No benchmark cases match the specified filters.")
+        st.markdown('</div>', unsafe_allow_html=True)
         return
 
-    case_options = [f"{row['case_id']} - {row['category']} - {row['symptom'][:40]}..." for _, row in filtered_df.iterrows()]
-    selected_option = st.sidebar.selectbox("Select Case to Troubleshoot", case_options)
+    # SCANNABLE DATASET TABLE
+    display_df = filtered_df[["case_id", "category", "severity", "osi_layer", "concept", "evidence_status"]].copy()
+    st.dataframe(display_df, use_container_width=True, height=240)
+
+    case_options = [f"{row['case_id']} - {row['category']} - {row['symptom'][:45]}..." for _, row in filtered_df.iterrows()]
+    selected_option = st.selectbox("SELECT CASE RECORD TO INSPECT", case_options, key="explorer_case_select")
 
     selected_id = selected_option.split(" - ")[0]
     case_info = get_case_by_id(filtered_df, selected_id)
 
-    if not case_info:
-        st.error("Error loading selected case details.")
-        return
+    if case_info:
+        st.markdown("---")
+        st.markdown(f"### CASE RECORD: `{case_info.get('case_id')}` [{case_info.get('category')}]")
+        st.markdown(f"**SYMPTOM:** {case_info.get('symptom')}")
+        st.markdown(f"**TOPOLOGY NOTE:** `{case_info.get('topology_note')}`")
 
-    col1, col2 = st.columns([3, 1])
+        # Persistent Rail Link
+        osi_val = case_info.get("osi_layer", "Layer 2")
+        tier_code = "P1"
+        if "3" in osi_val or "Network" in osi_val:
+            tier_code = "P4"
+        elif "VLAN" in case_info.get("category", ""):
+            tier_code = "P2"
+        elif "Routing" in case_info.get("category", ""):
+            tier_code = "P5"
+        elif "DHCP" in case_info.get("category", "") or "ACL" in case_info.get("category", ""):
+            tier_code = "P6"
 
-    with col1:
-        st.subheader(f"📌 Case {case_info.get('case_id')}: {case_info.get('category')} Fault")
-        st.markdown(f"**Symptom:** {case_info.get('symptom')}")
-        st.markdown(f"**Topology Note:** `{case_info.get('topology_note')}`")
+        render_priority_rail(tier_code)
 
-    with col2:
-        status_val = case_info.get("evidence_status", "DEMO_TEMPLATE")
-        if status_val == "VERIFIED_LAB":
-            st.success("🟢 **VERIFIED_LAB**\nConfirmed Packet Tracer CLI capture")
-        else:
-            st.info("🔵 **DEMO_TEMPLATE**\nDemo case template")
+        raw_csv_outputs = case_info.get("show_outputs", "")
+        show_output = load_case_evidence(selected_id, raw_csv_outputs)
+        st.markdown("#### CISCO CLI SHOW EVIDENCE OUTPUT")
+        st.code(show_output or "// No show command output provided", language="text")
 
-        st.markdown(f"**Severity:** `{case_info.get('severity')}`")
-        st.markdown(f"**OSI Layer:** `{case_info.get('osi_layer')}`")
-        st.markdown(f"**Concept Tag:** `{case_info.get('concept')}`")
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button("RUN DETERMINISTIC RULE CHECKER", type="primary", key="btn_explorer_rules", use_container_width=True):
+                checker = RuleChecker()
+                st.session_state["rule_results"] = checker.run_all_checks(show_output)
 
-    st.markdown("---")
-
-    st.subheader("📄 Cisco `show` Command Evidence")
-    raw_csv_outputs = case_info.get("show_outputs", "")
-    show_output = load_case_evidence(selected_id, raw_csv_outputs)
-    if show_output and show_output.strip():
-        st.code(show_output, language="text")
-    else:
-        st.warning("⚠️ No show command output provided for this case.")
-
-    st.markdown("---")
-
-    if "current_case_id" not in st.session_state or st.session_state["current_case_id"] != selected_id:
-        st.session_state["rule_results"] = None
-        st.session_state["ai_diagnosis"] = None
-        st.session_state["current_case_id"] = selected_id
-
-    col_btn1, col_btn2 = st.columns(2)
-
-    with col_btn1:
-        if st.button("⚙️ Run Deterministic Rule Checker", width="stretch"):
-            checker = RuleChecker()
-            st.session_state["rule_results"] = checker.run_all_checks(show_output)
-
-    with col_btn2:
-        if st.button("🤖 Run AI Diagnosis Engine", width="stretch"):
-            with st.spinner("Analyzing case evidence with AI Engine..."):
+        with col_btn2:
+            if st.button("RUN AI DIAGNOSIS ENGINE", type="primary", key="btn_explorer_ai", use_container_width=True):
+                checker = RuleChecker()
+                rule_res = checker.run_all_checks(show_output)
                 engine = AIDiagnosisEngine()
-                st.session_state["ai_diagnosis"] = engine.diagnose(
-                    case_info,
-                    st.session_state.get("rule_results") or []
-                )
+                st.session_state["ai_diagnosis"] = engine.diagnose(case_info, rule_res)
 
-    if st.session_state["rule_results"] is not None:
-        st.subheader("⚙️ Rule Checker Results")
-        for res in st.session_state["rule_results"]:
-            status = res.get("status", "INFO")
-            if status == "FAIL":
-                st.error(f"❌ **{res.get('check_name')}**: {res.get('details')}")
-            elif status == "WARN":
-                st.warning(f"⚠️ **{res.get('check_name')}**: {res.get('details')}")
-            else:
-                st.success(f"✅ **{res.get('check_name')}**: {res.get('details')}")
-
-    if st.session_state["ai_diagnosis"] is not None:
-        diag = st.session_state["ai_diagnosis"]
-        st.markdown("---")
-        st.subheader("🤖 AI Recommendation")
-        st.warning("⚠️ **AI Recommendation — Requires Human Review** (Do not auto-apply without human approval)")
-
-        ai_mode = diag.get("ai_mode", "Offline Demo")
-        if ai_mode == "Gemini LLM":
-            st.caption("⚡ **AI Mode:** `Gemini LLM` (Live API Call)")
-        else:
-            st.caption("ℹ️ **AI Mode:** `Offline Demo` (Deterministic Fallback Engine)")
-
-        conf = diag.get("confidence", "Medium")
-        if conf == "High":
-            st.markdown(f"**Confidence:** :green[{conf}]")
-        elif conf == "Medium":
-            st.markdown(f"**Confidence:** :orange[{conf}]")
-        else:
-            st.markdown(f"**Confidence:** :red[{conf}]")
-
-        st.markdown(f"**Root Cause:** {diag.get('root_cause')}")
-
-        st.markdown("**Cited Evidence:**")
-        for ev in diag.get("evidence", []):
-            st.markdown(f"- `{ev}`")
-
-        st.markdown(f"**Recommended Next Command:** `{diag.get('next_command')}`")
-
-        st.markdown("**Recommended Fix Steps:**")
-        for step in diag.get("fix_steps", []):
-            st.markdown(f"1. {step}")
-
-        st.markdown(f"**OSI Layer:** `{diag.get('osi_layer')}` | **Concept:** `{diag.get('concept')}`")
-
-        st.markdown("---")
-        st.subheader("👩‍💻 Human Reviewer Oversight & Decision")
-        st.info("As a human reviewer, inspect the AI diagnosis and cited evidence above, then select your decision below.")
-
-        existing_review = review_mgr.get_review_for_case(selected_id)
-        if existing_review:
-            st.success(
-                f"📋 **Existing Human Review Saved** [{existing_review.get('timestamp')}]\n\n"
-                f"**Decision:** `{existing_review.get('human_decision')}` | "
-                f"**Log ID:** `{existing_review.get('log_id')}`\n\n"
-                f"**Corrected Diagnosis / Notes:** {existing_review.get('corrected_diagnosis')}\n\n"
-                f"**Reason / Rationale:** {existing_review.get('reason_for_correction')}"
-            )
-
-        review_tab1, review_tab2, review_tab3 = st.tabs(["✅ Accept AI Diagnosis", "✏️ Edit Diagnosis", "❌ Reject Diagnosis"])
-
-        with review_tab1:
-            st.markdown("#### Accept Diagnosis")
-            accept_comments = st.text_area("Optional Reviewer Comments / Verification Notes", key=f"accept_notes_{selected_id}")
-            if st.button("Submit Decision: ACCEPT", type="primary", key=f"btn_accept_{selected_id}"):
-                initial_diag_text = f"Root Cause: {diag.get('root_cause')} | Fix: {'; '.join(diag.get('fix_steps', []))}"
-                res = review_mgr.record_review(
-                    case_id=selected_id,
-                    category=case_info.get("category", "General"),
-                    initial_ai_diagnosis=initial_diag_text,
-                    ai_confidence=diag.get("confidence", "Medium"),
-                    human_decision="Accept",
-                    corrected_diagnosis=initial_diag_text,
-                    reason_for_correction=accept_comments or "Accepted by reviewer after evidence inspection."
-                )
-                if res.get("success"):
-                    st.success(f"✅ Decision recorded in `data/responsible_ai_log.csv` as **LOG ID: {res['record']['log_id']}**")
-                    st.rerun()
+        if st.session_state.get("rule_results"):
+            st.markdown("#### DETERMINISTIC RULE EVALUATION STATES")
+            for res in st.session_state["rule_results"]:
+                status = res.get("status", "INFO")
+                if status == "FAIL":
+                    st.markdown(f'<div class="status-vocab status-vocab-fail">FAIL</div> <b>{res.get("check_name")}</b>: {res.get("details")}', unsafe_allow_html=True)
+                elif status == "NEED_MORE_EVIDENCE":
+                    st.markdown(f'<div class="status-vocab status-vocab-evidence">NEED_MORE_EVIDENCE</div> <b>{res.get("check_name")}</b>: {res.get("details")}', unsafe_allow_html=True)
+                elif status == "SUPPRESSED":
+                    st.markdown(f'<div class="status-vocab status-vocab-suppressed">SUPPRESSED</div> <b>{res.get("check_name")}</b>: {res.get("details")}', unsafe_allow_html=True)
+                elif status == "NOT_APPLICABLE":
+                    st.markdown(f'<div class="status-vocab status-vocab-na">NOT_APPLICABLE</div> <b>{res.get("check_name")}</b>: {res.get("details")}', unsafe_allow_html=True)
                 else:
-                    st.error(res.get("error"))
+                    st.markdown(f'<div class="status-vocab status-vocab-pass">PASS</div> <b>{res.get("check_name")}</b>: {res.get("details")}', unsafe_allow_html=True)
 
-        with review_tab2:
-            st.markdown("#### Edit / Correct Diagnosis")
-            default_edit_text = f"Root Cause: {diag.get('root_cause')}"
-            edited_diag = st.text_area("Corrected Diagnosis (Required)", value=default_edit_text, key=f"edit_text_{selected_id}")
-            edit_reason = st.text_area("Reason for Correction (Required)", placeholder="Explain why the AI diagnosis required correction...", key=f"edit_reason_{selected_id}")
-
-            if st.button("Submit Decision: EDIT", type="primary", key=f"btn_edit_{selected_id}"):
-                initial_diag_text = f"Root Cause: {diag.get('root_cause')} | Fix: {'; '.join(diag.get('fix_steps', []))}"
-                res = review_mgr.record_review(
-                    case_id=selected_id,
-                    category=case_info.get("category", "General"),
-                    initial_ai_diagnosis=initial_diag_text,
-                    ai_confidence=diag.get("confidence", "Medium"),
-                    human_decision="Edit",
-                    corrected_diagnosis=edited_diag,
-                    reason_for_correction=edit_reason
-                )
-                if res.get("success"):
-                    st.success(f"✏️ Correction recorded in `data/responsible_ai_log.csv` as **LOG ID: {res['record']['log_id']}**")
-                    st.rerun()
-                else:
-                    st.error(res.get("error"))
-
-        with review_tab3:
-            st.markdown("#### Reject Diagnosis")
-            reject_reason = st.text_area("Rejection Reason (Required)", placeholder="Specify why this AI diagnosis is rejected...", key=f"reject_reason_{selected_id}")
-
-            if st.button("Submit Decision: REJECT", type="primary", key=f"btn_reject_{selected_id}"):
-                initial_diag_text = f"Root Cause: {diag.get('root_cause')} | Fix: {'; '.join(diag.get('fix_steps', []))}"
-                res = review_mgr.record_review(
-                    case_id=selected_id,
-                    category=case_info.get("category", "General"),
-                    initial_ai_diagnosis=initial_diag_text,
-                    ai_confidence=diag.get("confidence", "Medium"),
-                    human_decision="Reject",
-                    corrected_diagnosis="[REJECTED]",
-                    reason_for_correction=reject_reason
-                )
-                if res.get("success"):
-                    st.error(f"❌ Rejection logged in `data/responsible_ai_log.csv` as **LOG ID: {res['record']['log_id']}**")
-                    st.rerun()
-                else:
-                    st.error(res.get("error"))
-
-        st.markdown("---")
-        st.subheader("🔧 Fix & Verification Workflow")
-        st.code("1. AI Diagnosis ➔ 2. Human Review ➔ 3. Apply Fix in Packet Tracer ➔ 4. Verify Manually ➔ 5. Record Result", language="text")
-        st.info("ℹ️ **Fix must be applied and verified manually in Packet Tracer.** (NetSage AI records your manual verification results, but does not control Packet Tracer directly).")
-
-        existing_verif = verif_mgr.get_verification_for_case(selected_id)
-        if existing_verif:
-            st.success(
-                f"📋 **Existing Verification Record** [{existing_verif.get('timestamp')}]\n\n"
-                f"**Result:** `{existing_verif.get('verification_result')}` | "
-                f"**Before:** `{existing_verif.get('before_status')}` ➔ **After:** `{existing_verif.get('after_status')}`\n\n"
-                f"**Verification Notes:** {existing_verif.get('verification_notes')}"
-            )
-
-        v_col1, v_col2, v_col3 = st.columns(3)
-        with v_col1:
-            before_status = st.selectbox("Before Fix Connectivity", ["FAIL", "PASS", "NOT_TESTED"], key=f"verif_before_{selected_id}")
-        with v_col2:
-            after_status = st.selectbox("After Fix Connectivity", ["PASS", "FAIL", "NOT_TESTED"], key=f"verif_after_{selected_id}")
-        with v_col3:
-            verif_result = st.selectbox("Final Verification Result", ["RESOLVED", "NOT_RESOLVED", "NOT_TESTED"], key=f"verif_res_{selected_id}")
-
-        verif_notes = st.text_area(
-            "Verification Notes & Test Evidence (Required for RESOLVED / NOT_RESOLVED)",
-            placeholder="Document manual ping results or CLI verification outputs from Packet Tracer...",
-            key=f"verif_notes_{selected_id}"
-        )
-
-        if st.button("Submit Fix Verification Record", type="primary", key=f"btn_verif_{selected_id}"):
-            res_v = verif_mgr.record_verification(
-                case_id=selected_id,
-                before_status=before_status,
-                after_status=after_status,
-                verification_result=verif_result,
-                verification_notes=verif_notes
-            )
-            if res_v.get("success"):
-                st.success(f"✅ Verification record saved in `data/verification_log.csv` as **LOG ID: {res_v['record']['log_id']}**")
-                st.rerun()
-            else:
-                st.error(res_v.get("error"))
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def render_analytics_dashboard(df_cases: pd.DataFrame, df_reviews: pd.DataFrame, df_verifications: pd.DataFrame):
-    st.subheader("📊 Responsible AI & Performance Analytics")
-    st.caption("Real-time metrics calculated dynamically from case dataset, human review log, and verification log.")
+    st.markdown('<div class="ops-panel">', unsafe_allow_html=True)
+    st.markdown('<div class="ops-panel-header">RESPONSIBLE AI & PERFORMANCE METRICS</div>', unsafe_allow_html=True)
 
     kpis = AnalyticsManager.get_kpis(df_cases, df_reviews, df_verifications)
 
     col_kpi1, col_kpi2, col_kpi3, col_kpi4, col_kpi5, col_kpi6 = st.columns(6)
-
     with col_kpi1:
-        st.metric("Total Cases", kpis["total_cases"])
+        st.metric("TOTAL CASES", kpis["total_cases"])
     with col_kpi2:
-        st.metric("Diagnoses Reviewed", kpis["total_reviews"])
+        st.metric("REVIEWS LOGGED", kpis["total_reviews"])
     with col_kpi3:
-        st.metric("Accepted", kpis["accepted_count"])
+        st.metric("ACCEPTED", kpis["accepted_count"])
     with col_kpi4:
-        st.metric("Human Corrections", kpis["corrections_count"], help="Edited + Rejected diagnoses")
+        st.metric("CORRECTIONS", kpis["corrections_count"])
     with col_kpi5:
-        if kpis["agreement_rate"] is not None:
-            st.metric("AI Agreement Rate", f"{kpis['agreement_rate']}%")
-        else:
-            st.metric("AI Agreement Rate", "N/A", help="Requires at least 1 human review to calculate")
+        st.metric("AGREEMENT RATE", f"{kpis['agreement_rate']}%" if kpis['agreement_rate'] is not None else "N/A")
     with col_kpi6:
-        st.metric("Verified Resolved", kpis.get("resolved_count", 0), help="Cases verified as RESOLVED in Packet Tracer")
+        st.metric("VERIFIED FIXED", kpis.get("resolved_count", 0))
 
     st.markdown("---")
 
-    st.subheader("📈 Case Dataset Metrics")
-    c_col1, c_col2, c_col3 = st.columns(3)
-
+    c_col1, c_col2 = st.columns(2)
     cat_counts = AnalyticsManager.get_category_counts(df_cases)
     if cat_counts:
         df_cat = pd.DataFrame(list(cat_counts.items()), columns=["Category", "Cases"])
-        fig_cat = px.bar(df_cat, x="Category", y="Cases", color="Category", title="Cases by Fault Category")
-        c_col1.plotly_chart(fig_cat, width="stretch")
+        fig_cat = px.bar(df_cat, x="Category", y="Cases", color="Category", title="Cases by Category", template="plotly_dark")
+        fig_cat.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        c_col1.plotly_chart(fig_cat, use_container_width=True)
 
-    sev_counts = AnalyticsManager.get_severity_counts(df_cases)
-    if sev_counts:
-        df_sev = pd.DataFrame(list(sev_counts.items()), columns=["Severity", "Cases"])
-        fig_sev = px.pie(df_sev, names="Severity", values="Cases", title="Cases by Severity Level", hole=0.4)
-        c_col2.plotly_chart(fig_sev, width="stretch")
-
-    osi_counts = AnalyticsManager.get_osi_layer_counts(df_cases)
-    if osi_counts:
-        df_osi = pd.DataFrame(list(osi_counts.items()), columns=["OSI Layer", "Cases"])
-        fig_osi = px.bar(df_osi, x="OSI Layer", y="Cases", color="OSI Layer", title="Cases by OSI Layer")
-        c_col3.plotly_chart(fig_osi, width="stretch")
-
-    st.markdown("---")
-
-    st.subheader("👩‍💻 Responsible AI Human Review Metrics")
-
-    if df_reviews.empty:
-        st.info("ℹ️ **No human reviews recorded yet.** Submit reviews in the Troubleshooting Workspace tab to see AI agreement rates and correction distribution.")
-    else:
-        r_col1, r_col2 = st.columns(2)
-
+    if not df_reviews.empty:
         dec_counts = AnalyticsManager.get_decision_counts(df_reviews)
         df_dec = pd.DataFrame(list(dec_counts.items()), columns=["Decision", "Count"])
         fig_dec = px.bar(
             df_dec, x="Decision", y="Count", color="Decision",
-            color_discrete_map={"Accept": "#2ecc71", "Edit": "#f39c12", "Reject": "#e74c3c"},
-            title="Human Review Decision Breakdown (Accept vs Edit vs Reject)"
+            color_discrete_map={"Accept": "#34d399", "Edit": "#fbbf24", "Reject": "#f87171"},
+            title="Human Review Decision Breakdown",
+            template="plotly_dark"
         )
-        r_col1.plotly_chart(fig_dec, width="stretch")
-
-        conf_counts = AnalyticsManager.get_confidence_counts(df_reviews)
-        df_conf = pd.DataFrame(list(conf_counts.items()), columns=["AI Confidence", "Count"])
-        fig_conf = px.pie(df_conf, names="AI Confidence", values="Count", title="AI Confidence Distribution on Reviewed Cases", hole=0.4)
-        r_col2.plotly_chart(fig_conf, width="stretch")
+        fig_dec.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        c_col2.plotly_chart(fig_dec, use_container_width=True)
 
     st.markdown("---")
-
-    st.subheader("📋 Responsible AI Correction Audit Log")
-
-    if df_reviews.empty:
-        st.warning("No human review records present in `data/responsible_ai_log.csv`.")
+    st.markdown("#### RESPONSIBLE AI AUDIT LOG TABLE")
+    if not df_reviews.empty:
+        st.dataframe(df_reviews, use_container_width=True)
     else:
-        display_cols = [
-            col for col in [
-                "log_id", "case_id", "timestamp", "category",
-                "human_decision", "ai_confidence", "initial_ai_diagnosis",
-                "corrected_diagnosis", "reason_for_correction"
-            ] if col in df_reviews.columns
-        ]
-        st.dataframe(df_reviews[display_cols], width="stretch")
+        st.info("No review records logged in `data/responsible_ai_log.csv`.")
 
-    st.markdown("---")
-    st.subheader("🔧 Fix Verification Log Table")
-    if df_verifications.empty:
-        st.info("No manual verification records present in `data/verification_log.csv`.")
-    else:
-        st.dataframe(df_verifications, width="stretch")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def main():
-    st.title("NetSage AI — AI-Assisted Network Troubleshooting")
-    st.caption("Packet Tracer & Cisco Lab Network Troubleshooting Helper")
-    st.markdown("---")
+    inject_custom_css()
+
+    st.markdown("""
+    <div class="netsage-console-header">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <span class="sys-tag sys-tag-active">NETSAGE_AI // v2.0</span>
+                <span class="sys-tag">ENGINE: FACT_BASED_V2</span>
+                <span class="sys-tag">RULES: 12_CONTRACTS</span>
+                <h1 class="netsage-console-title">Cisco Network Diagnostic Console</h1>
+                <div class="netsage-console-subtitle">Deterministic Rule Evaluation & AI-Assisted Troubleshooting Console</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     tab_new_session, tab_explorer, tab_analytics = st.tabs([
-        "🔎 Guided Network Investigation",
-        "🎯 Case Explorer",
-        "📊 Responsible AI Analytics"
+        "01 // GUIDED ASSISTANT",
+        "02 // CASE EXPLORER",
+        "03 // RESPONSIBLE AI ANALYTICS"
     ])
 
     df_cases = load_cases()
@@ -870,7 +970,7 @@ def main():
 
     with tab_explorer:
         if df_cases.empty:
-            st.error("⚠️ No cases dataset found in `data/cases.csv`. Please verify file existence.")
+            st.error("No cases dataset found in `data/cases.csv`.")
         else:
             render_case_explorer_workflow(df_cases, review_mgr, verif_mgr)
 

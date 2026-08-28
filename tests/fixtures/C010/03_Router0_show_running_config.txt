@@ -1,0 +1,23 @@
+DEVICE: Router0
+COMMAND: show running-config
+
+Router0# show running-config
+Building configuration...
+
+Current configuration : 1054 bytes
+!
+version 15.1
+!
+hostname Router0
+!
+interface GigabitEthernet0/0
+ ip address 192.168.50.1 255.255.255.0
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/1
+ ip address 10.1.1.1 255.255.255.0
+ duplex auto
+ speed auto
+!
+end

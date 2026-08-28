@@ -227,7 +227,7 @@ class FactExtractor:
     @classmethod
     def _extract_interface_facts(cls, ctx: FactContext, dev: str, cmd: str, text: str, prov: FactProvenance):
         # Parse show ip interface brief
-        ip_ifaces = re.findall(r"^(\S+)\s+([\d\.]+|unassigned)\s+YES\s+\S+\s+(up|down|administratively down)\s+(up|down)", text, re.MULTILINE | re.IGNORECASE)
+        ip_ifaces = re.findall(r"^\s*(\S+)\s+([\d\.]+|unassigned)\s+YES\s+\S+\s+(up|down|administratively down)\s+(up|down)", text, re.MULTILINE | re.IGNORECASE)
         for if_name, ip_addr, status, proto in ip_ifaces:
             fact = InterfaceFact(
                 device=dev,
@@ -239,6 +239,18 @@ class FactExtractor:
                 provenance=prov
             )
             ctx.interfaces.append(fact)
+
+        # Parse interface configuration 'ip address X.X.X.X Y.Y.Y.Y'
+        cfg_ips = re.findall(r"(?:interface\s+(\S+)\s+)?ip address\s+([\d\.]+)\s+([\d\.]+)", text, re.IGNORECASE)
+        for if_name, ip_addr, mask in cfg_ips:
+            ctx.interfaces.append(InterfaceFact(
+                device=dev,
+                command=cmd,
+                interface_name=if_name or "Interface",
+                ip_address=ip_addr,
+                subnet_mask=mask,
+                provenance=prov
+            ))
 
         # Parse table rows from show interfaces trunk
         trunk_tbl_rows = re.findall(r"^\s*(\S+)\s+(?:on|auto|desirable|off)\s+\S+\s+(?:trunking|not-trunking)\s+(\d+)", text, re.MULTILINE | re.IGNORECASE)

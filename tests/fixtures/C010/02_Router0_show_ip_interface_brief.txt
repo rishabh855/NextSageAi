@@ -1,0 +1,7 @@
+DEVICE: Router0
+COMMAND: show ip interface brief
+
+Router0# show ip interface brief
+Interface                  IP-Address      OK? Method Status                Protocol
+GigabitEthernet0/0         192.168.50.1    YES manual up                    up
+GigabitEthernet0/1         10.1.1.1        YES manual up                    up

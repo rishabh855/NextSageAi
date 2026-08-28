@@ -103,7 +103,7 @@ class DHCPRelayRule(BaseRule):
             )
 
         ev_low = facts.raw_evidence.lower()
-        has_rtr_config = facts.metadata.has_router_config or any(k in ev_low for k in ["running-config", "interface gigabitethernet", "interface fastethernet"])
+        has_rtr_config = "running-config" in ev_low or "building configuration" in ev_low or ("interface gigabit" in ev_low and "ip address " in ev_low)
 
         if not has_rtr_config:
             return RuleResult(
@@ -484,8 +484,14 @@ class GatewayMismatchRule(BaseRule):
 
         if gw_match:
             gw_ip = gw_match.group(1).strip()
-            if gw_ip in ["10.0.1.254", "10.0.10.254", "192.168.1.254"] or (rtr_ips and not any(r == gw_ip for r in rtr_ips)):
-                r_target = rtr_ips[0] if rtr_ips else "10.0.1.1"
+            if not rtr_ips:
+                return RuleResult(
+                    rule_id=self.rule_id, check_name=self.check_name,
+                    status=RuleStatus.NEED_MORE_EVIDENCE, priority=self.priority,
+                    details="Host default gateway collected; router interface IP configuration required to verify gateway alignment."
+                )
+            if not any(r == gw_ip for r in rtr_ips):
+                r_target = rtr_ips[0]
                 return RuleResult(
                     rule_id=self.rule_id, check_name=self.check_name,
                     status=RuleStatus.FAIL, priority=self.priority,

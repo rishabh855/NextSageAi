@@ -1,0 +1,10 @@
+DEVICE: PC0
+COMMAND: ipconfig
+
+PC0> ipconfig
+
+FastEthernet0 Connection:(default port)
+   Link-local IPv6 Address. . . . . : FE80::201:C7FF:FE11:1111
+   IPv4 Address. . . . . . . . . . . : 10.0.1.50
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 10.0.1.254

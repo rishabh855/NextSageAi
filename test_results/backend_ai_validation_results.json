@@ -1,0 +1,133 @@
+[
+  {
+    "case_id": "C007",
+    "category": "Gateway/IP",
+    "concept": "Default Gateway Mismatch",
+    "timestamp": "2026-08-28T19:19:03.761786",
+    "evidence_steps": [
+      {
+        "step": 1,
+        "device": "PC0",
+        "command": "ipconfig",
+        "backend_status": "NO_CONFIRMED_ISSUE",
+        "progression_check": "PASS"
+      },
+      {
+        "step": 2,
+        "device": "Router0",
+        "command": "show ip interface brief",
+        "backend_status": "ISSUE_CONFIRMED",
+        "deterministic_finding": "Rule check failure: Gateway Mismatch: Host default gateway is set to 10.0.1.254, but active router interface is 10.0.1.1.",
+        "benchmark_validation": "PASS"
+      }
+    ],
+    "backend_status": "ISSUE_CONFIRMED",
+    "detected_fault": "Rule check failure: Gateway Mismatch: Host default gateway is set to 10.0.1.254, but active router interface is 10.0.1.1.",
+    "benchmark_result": "PASS",
+    "ai_output": {
+      "status": "ISSUE_CONFIRMED",
+      "root_cause": "Rule check failure: Gateway Mismatch: Host default gateway is set to 10.0.1.254, but active router interface is 10.0.1.1.",
+      "likely_root_cause": "Rule check failure: Gateway Mismatch: Host default gateway is set to 10.0.1.254, but active router interface is 10.0.1.1.",
+      "confidence": "High",
+      "confidence_score": "High",
+      "evidence": [
+        "Deterministic Check [Default Gateway Check]: Gateway Mismatch: Host default gateway is set to 10.0.1.254, but active router interface is 10.0.1.1."
+      ],
+      "evidence_cited": [
+        "Deterministic Check [Default Gateway Check]: Gateway Mismatch: Host default gateway is set to 10.0.1.254, but active router interface is 10.0.1.1."
+      ],
+      "next_device": "",
+      "next_command": "",
+      "recommended_next_command": "",
+      "reason_for_command": "Fault has been confirmed by CLI evidence.",
+      "fix_steps": [
+        "Fix identified issue: Gateway Mismatch: Host default gateway is set to 10.0.1.254, but active router interface is 10.0.1.1."
+      ],
+      "suggested_fix": [
+        "Fix identified issue: Gateway Mismatch: Host default gateway is set to 10.0.1.254, but active router interface is 10.0.1.1."
+      ],
+      "osi_layer": "Layer 3",
+      "concept": "General Network Fault",
+      "ai_mode": "Offline Demo"
+    },
+    "ai_validation": {
+      "root_cause_consistency": "PASS",
+      "evidence_grounding": "PASS",
+      "device_hallucination": "PASS",
+      "command_hallucination": "PASS",
+      "technical_value_check": "PASS",
+      "fix_relevance": "PASS",
+      "overall": "PASS"
+    },
+    "final_result": "AUTOMATED_PASS"
+  },
+  {
+    "case_id": "C010",
+    "category": "DHCP",
+    "concept": "DHCP Relay / IP Helper Address",
+    "timestamp": "2026-08-28T19:19:06.667173",
+    "evidence_steps": [
+      {
+        "step": 1,
+        "device": "PC0",
+        "command": "ipconfig",
+        "backend_status": "NO_CONFIRMED_ISSUE",
+        "progression_check": "PASS"
+      },
+      {
+        "step": 2,
+        "device": "Router0",
+        "command": "show ip interface brief",
+        "backend_status": "NO_CONFIRMED_ISSUE",
+        "progression_check": "PASS"
+      },
+      {
+        "step": 3,
+        "device": "Router0",
+        "command": "show running-config",
+        "backend_status": "ISSUE_CONFIRMED",
+        "deterministic_finding": "Rule check failure: DHCP Relay Error: Router interface lacks 'ip helper-address' pointing to remote DHCP server.",
+        "benchmark_validation": "PASS"
+      }
+    ],
+    "backend_status": "ISSUE_CONFIRMED",
+    "detected_fault": "Rule check failure: DHCP Relay Error: Router interface lacks 'ip helper-address' pointing to remote DHCP server.",
+    "benchmark_result": "PASS",
+    "ai_output": {
+      "status": "ISSUE_CONFIRMED",
+      "root_cause": "Rule check failure: DHCP Relay Error: Router interface lacks 'ip helper-address' pointing to remote DHCP server.",
+      "likely_root_cause": "Rule check failure: DHCP Relay Error: Router interface lacks 'ip helper-address' pointing to remote DHCP server.",
+      "confidence": "High",
+      "confidence_score": "High",
+      "evidence": [
+        "Deterministic Check [DHCP Relay Check]: DHCP Relay Error: Router interface lacks 'ip helper-address' pointing to remote DHCP server."
+      ],
+      "evidence_cited": [
+        "Deterministic Check [DHCP Relay Check]: DHCP Relay Error: Router interface lacks 'ip helper-address' pointing to remote DHCP server."
+      ],
+      "next_device": "",
+      "next_command": "",
+      "recommended_next_command": "",
+      "reason_for_command": "Fault has been confirmed by CLI evidence.",
+      "fix_steps": [
+        "Fix identified issue: DHCP Relay Error: Router interface lacks 'ip helper-address' pointing to remote DHCP server."
+      ],
+      "suggested_fix": [
+        "Fix identified issue: DHCP Relay Error: Router interface lacks 'ip helper-address' pointing to remote DHCP server."
+      ],
+      "osi_layer": "Layer 3",
+      "concept": "General Network Fault",
+      "ai_mode": "Offline Demo"
+    },
+    "ai_validation": {
+      "root_cause_consistency": "PASS",
+      "evidence_grounding": "PASS",
+      "device_hallucination": "PASS",
+      "command_hallucination": "PASS",
+      "technical_value_check": "PASS",
+      "fix_relevance": "PASS",
+      "overall": "PASS"
+    },
+    "final_result": "AUTOMATED_PASS"
+  }
+]

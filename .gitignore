@@ -16,3 +16,6 @@ ENV/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Temporary test sessions
+data/evidence/sessions/
