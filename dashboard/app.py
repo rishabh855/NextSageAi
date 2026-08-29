@@ -683,15 +683,16 @@ def render_new_session_workflow(
         st.markdown('<div class="ops-panel-header">DIAGNOSTIC ANALYSIS // DETERMINISTIC FINDINGS</div>', unsafe_allow_html=True)
 
         # Highlight Tier on Persistent Rail
-        osi_val = diag.get("osi_layer", "Layer 2")
+        osi_val = str(diag.get("osi_layer") or "Layer 2")
+        root_cause_str = str(diag.get("root_cause") or "")
         tier_code = "P1"
         if "3" in osi_val or "Network" in osi_val:
             tier_code = "P4"
-        elif "VLAN" in diag.get("root_cause", "") or "Trunk" in diag.get("root_cause", ""):
+        elif "VLAN" in root_cause_str or "Trunk" in root_cause_str:
             tier_code = "P2"
-        elif "Routing" in diag.get("root_cause", ""):
+        elif "Routing" in root_cause_str:
             tier_code = "P5"
-        elif "DHCP" in diag.get("root_cause", "") or "ACL" in diag.get("root_cause", ""):
+        elif "DHCP" in root_cause_str or "ACL" in root_cause_str:
             tier_code = "P6"
 
         render_priority_rail(tier_code)
@@ -844,15 +845,16 @@ def render_case_explorer_workflow(
         st.markdown(f"**TOPOLOGY NOTE:** `{case_info.get('topology_note')}`")
 
         # Persistent Rail Link
-        osi_val = case_info.get("osi_layer", "Layer 2")
+        osi_val = str(case_info.get("osi_layer") or "Layer 2")
+        cat_str = str(case_info.get("category") or "")
         tier_code = "P1"
         if "3" in osi_val or "Network" in osi_val:
             tier_code = "P4"
-        elif "VLAN" in case_info.get("category", ""):
+        elif "VLAN" in cat_str:
             tier_code = "P2"
-        elif "Routing" in case_info.get("category", ""):
+        elif "Routing" in cat_str:
             tier_code = "P5"
-        elif "DHCP" in case_info.get("category", "") or "ACL" in case_info.get("category", ""):
+        elif "DHCP" in cat_str or "ACL" in cat_str:
             tier_code = "P6"
 
         render_priority_rail(tier_code)
