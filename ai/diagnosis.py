@@ -434,16 +434,18 @@ class AIDiagnosisEngine:
         return (rtr_name, client_if, server_ip)
 
     @classmethod
-    def generate_structured_remediation(cls, failed_rules: List[Dict[str, Any]], case_info: Dict[str, Any]) -> tuple[List[str], List[str], List[str]]:
+    def generate_structured_remediation(cls, failed_rules: List[Dict[str, Any]], case_info: Dict[str, Any]) -> tuple[List[str], List[str], List[str], List[str]]:
         if not failed_rules:
             return (
                 ["Review device configuration in Cisco Packet Tracer."],
+                [],
                 [],
                 ["show running-config", "show ip interface brief"]
             )
 
         steps = []
         ios_commands = []
+        host_commands = []
         verification_commands = []
 
         show_outputs = case_info.get("show_outputs", "")
@@ -554,18 +556,41 @@ class AIDiagnosisEngine:
                 ])
 
             elif "Default Gateway" in check_name or "gateway mismatch" in details_low:
-                steps.append("Reconfigure host default gateway address in Packet Tracer host network settings.")
-                ios_commands.extend([
-                    "On PC, navigate to PC -> Desktop -> IP Configuration to update Default Gateway to match local router interface IP."
+                pc_match = re.search(r"\b(PC\d*|Host\d*)\b", f"{details} {topology_note}", re.IGNORECASE)
+                pc_name = pc_match.group(1) if pc_match else "PC0"
+                
+                gw_match = re.search(r"\b(?:active router interface is|router interface IP|gateway is set to match|active router interface|router IP)\D*(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b", f"{details} {show_outputs} {topology_note}", re.IGNORECASE)
+                if not gw_match:
+                    gw_match = re.search(r"GigabitEthernet\S+\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})", show_outputs, re.IGNORECASE)
+                gw_ip = gw_match.group(1) if gw_match else "<router_interface_ip>"
+
+                steps.extend([
+                    f"On {pc_name}, open Desktop → IP Configuration.",
+                    f"Change the Default Gateway to {gw_ip}."
+                ])
+                host_commands.extend([
+                    f"{pc_name} → Desktop → IP Configuration",
+                    f"Default Gateway: {gw_ip}"
                 ])
                 verification_commands.extend([
-                    "ipconfig /all"
+                    "ipconfig /all",
+                    f"ping {gw_ip}"
                 ])
 
             elif "Subnet Mask" in check_name or "subnet mask" in details_low:
-                steps.append("Reconfigure host subnet mask in Packet Tracer host network settings.")
-                ios_commands.extend([
-                    "On PC, navigate to PC -> Desktop -> IP Configuration to update Subnet Mask to match local router interface subnet mask."
+                pc_match = re.search(r"\b(PC\d*|Host\d*)\b", f"{details} {topology_note}", re.IGNORECASE)
+                pc_name = pc_match.group(1) if pc_match else "PC0"
+
+                mask_match = re.search(r"\b(?:subnet mask is|subnet mask|router interface subnet mask)\D*(255\.\d{1,3}\.\d{1,3}\.\d{1,3})\b", f"{details} {show_outputs} {topology_note}", re.IGNORECASE)
+                mask_val = mask_match.group(1) if mask_match else "<local_subnet_mask>"
+
+                steps.extend([
+                    f"On {pc_name}, open Desktop → IP Configuration.",
+                    f"Change the Subnet Mask to {mask_val}."
+                ])
+                host_commands.extend([
+                    f"{pc_name} → Desktop → IP Configuration",
+                    f"Subnet Mask: {mask_val}"
                 ])
                 verification_commands.extend([
                     "ipconfig /all"
@@ -649,9 +674,10 @@ class AIDiagnosisEngine:
                 verification_commands.extend(["show running-config"])
 
         unique_ios = list(dict.fromkeys(ios_commands))
+        unique_host = list(dict.fromkeys(host_commands))
         unique_verif = list(dict.fromkeys(verification_commands))
 
-        return steps, unique_ios, unique_verif
+        return steps, unique_ios, unique_host, unique_verif
 
     def select_next_device_and_command(
         self,
@@ -762,7 +788,7 @@ class AIDiagnosisEngine:
             root_cause = "No issue detected in current CLI output. Continuing diagnostic checks."
             evidence = ["Current command evidence shows normal operation for inspected component."]
 
-        fix_steps, ios_cmds, verif_cmds = self.generate_structured_remediation(failed_rules, case_info)
+        fix_steps, ios_cmds, host_cmds, verif_cmds = self.generate_structured_remediation(failed_rules, case_info)
 
         diagnosis = {
             "status": status,
@@ -779,6 +805,7 @@ class AIDiagnosisEngine:
             "fix_steps": fix_steps,
             "suggested_fix": fix_steps,
             "ios_commands": ios_cmds,
+            "host_commands": host_cmds,
             "verification_commands": verif_cmds,
             "osi_layer": case_info.get("osi_layer", "Layer 2" if "vlan" in symptom.lower() or "trunk" in symptom.lower() else "Layer 3"),
             "concept": case_info.get("concept", "Native VLAN Mismatch" if has_native_mismatch else "General Network Fault"),

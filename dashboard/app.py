@@ -720,10 +720,18 @@ def render_new_session_workflow(
         for idx, step in enumerate(diag.get("fix_steps", []), 1):
             st.markdown(f"{idx}. {step}")
 
-        ios_cmds = diag.get("ios_commands", [])
-        if ios_cmds:
+        cisco_cmds = [c for c in diag.get("ios_commands", []) if not c.startswith("On PC") and "→" not in c]
+        if cisco_cmds:
             st.markdown("**CISCO IOS CONFIGURATION COMMANDS:**")
-            st.code("\n".join(ios_cmds), language="cisco")
+            st.code("\n".join(cisco_cmds), language="cisco")
+
+        host_steps = diag.get("host_commands", [])
+        if not host_steps:
+            host_steps = [c for c in diag.get("ios_commands", []) if c.startswith("On PC") or "→" in c]
+
+        if host_steps:
+            st.markdown("**HOST CONFIGURATION STEPS:**")
+            st.code("\n".join(host_steps), language="yaml")
 
         verif_cmds = diag.get("verification_commands", [])
         if verif_cmds:
