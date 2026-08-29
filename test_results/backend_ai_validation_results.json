@@ -1,9 +1,82 @@
 [
   {
+    "case_id": "C001",
+    "category": "VLAN",
+    "concept": "VLAN Trunking / Pruning",
+    "timestamp": "2026-08-29T14:18:14.540182",
+    "evidence_steps": [
+      {
+        "step": 1,
+        "device": "Switch0",
+        "command": "show interfaces trunk",
+        "backend_status": "NO_CONFIRMED_ISSUE",
+        "progression_check": "PASS"
+      },
+      {
+        "step": 2,
+        "device": "Switch1",
+        "command": "show interfaces trunk",
+        "backend_status": "ISSUE_CONFIRMED",
+        "deterministic_finding": "Rule check failure: VLAN trunking mismatch: VLAN 10 is allowed on Switch1 trunk but disallowed/missing on Switch2.",
+        "benchmark_validation": "PASS"
+      }
+    ],
+    "backend_status": "ISSUE_CONFIRMED",
+    "detected_fault": "Rule check failure: VLAN trunking mismatch: VLAN 10 is allowed on Switch1 trunk but disallowed/missing on Switch2.",
+    "benchmark_result": "PASS",
+    "ai_output": {
+      "status": "ISSUE_CONFIRMED",
+      "root_cause": "Rule check failure: VLAN trunking mismatch: VLAN 10 is allowed on Switch1 trunk but disallowed/missing on Switch2.",
+      "likely_root_cause": "Rule check failure: VLAN trunking mismatch: VLAN 10 is allowed on Switch1 trunk but disallowed/missing on Switch2.",
+      "confidence": "High",
+      "confidence_score": "High",
+      "evidence": [
+        "Deterministic Check [VLAN Trunking Check]: VLAN trunking mismatch: VLAN 10 is allowed on Switch1 trunk but disallowed/missing on Switch2."
+      ],
+      "evidence_cited": [
+        "Deterministic Check [VLAN Trunking Check]: VLAN trunking mismatch: VLAN 10 is allowed on Switch1 trunk but disallowed/missing on Switch2."
+      ],
+      "next_device": "",
+      "next_command": "",
+      "recommended_next_command": "",
+      "reason_for_command": "Fault has been confirmed by CLI evidence.",
+      "fix_steps": [
+        "Add VLAN 10 to the allowed VLAN list on Switch1 interface GigabitEthernet0/1."
+      ],
+      "suggested_fix": [
+        "Add VLAN 10 to the allowed VLAN list on Switch1 interface GigabitEthernet0/1."
+      ],
+      "ios_commands": [
+        "enable",
+        "configure terminal",
+        "interface GigabitEthernet0/1",
+        "switchport trunk allowed vlan add 10",
+        "end",
+        "write memory"
+      ],
+      "verification_commands": [
+        "show interfaces trunk",
+        "show interfaces GigabitEthernet0/1 switchport"
+      ],
+      "osi_layer": "Layer 2",
+      "concept": "General Network Fault",
+      "ai_mode": "Offline Demo"
+    },
+    "ai_validation": {
+      "command_compatibility": "PASS",
+      "technical_value_check": "PASS",
+      "root_cause_consistency": "PASS",
+      "evidence_grounding": "PASS",
+      "device_hallucination": "PASS",
+      "overall": "PASS"
+    },
+    "final_result": "AUTOMATED_PASS"
+  },
+  {
     "case_id": "C007",
     "category": "Gateway/IP",
     "concept": "Default Gateway Mismatch",
-    "timestamp": "2026-08-28T19:19:03.761786",
+    "timestamp": "2026-08-29T14:18:16.323464",
     "evidence_steps": [
       {
         "step": 1,
@@ -41,22 +114,27 @@
       "recommended_next_command": "",
       "reason_for_command": "Fault has been confirmed by CLI evidence.",
       "fix_steps": [
-        "Fix identified issue: Gateway Mismatch: Host default gateway is set to 10.0.1.254, but active router interface is 10.0.1.1."
+        "Reconfigure host default gateway address in Packet Tracer host network settings."
       ],
       "suggested_fix": [
-        "Fix identified issue: Gateway Mismatch: Host default gateway is set to 10.0.1.254, but active router interface is 10.0.1.1."
+        "Reconfigure host default gateway address in Packet Tracer host network settings."
+      ],
+      "ios_commands": [
+        "On PC, navigate to PC -> Desktop -> IP Configuration to update Default Gateway to match local router interface IP."
+      ],
+      "verification_commands": [
+        "ipconfig /all"
       ],
       "osi_layer": "Layer 3",
       "concept": "General Network Fault",
       "ai_mode": "Offline Demo"
     },
     "ai_validation": {
+      "command_compatibility": "PASS",
+      "technical_value_check": "PASS",
       "root_cause_consistency": "PASS",
       "evidence_grounding": "PASS",
       "device_hallucination": "PASS",
-      "command_hallucination": "PASS",
-      "technical_value_check": "PASS",
-      "fix_relevance": "PASS",
       "overall": "PASS"
     },
     "final_result": "AUTOMATED_PASS"
@@ -65,7 +143,7 @@
     "case_id": "C010",
     "category": "DHCP",
     "concept": "DHCP Relay / IP Helper Address",
-    "timestamp": "2026-08-28T19:19:06.667173",
+    "timestamp": "2026-08-29T14:18:18.757265",
     "evidence_steps": [
       {
         "step": 1,
@@ -110,22 +188,38 @@
       "recommended_next_command": "",
       "reason_for_command": "Fault has been confirmed by CLI evidence.",
       "fix_steps": [
-        "Fix identified issue: DHCP Relay Error: Router interface lacks 'ip helper-address' pointing to remote DHCP server."
+        "Configure 'ip helper-address 10.1.1.100' on Router client-facing interface brief.",
+        "Reconfigure host subnet mask in Packet Tracer host network settings."
       ],
       "suggested_fix": [
-        "Fix identified issue: DHCP Relay Error: Router interface lacks 'ip helper-address' pointing to remote DHCP server."
+        "Configure 'ip helper-address 10.1.1.100' on Router client-facing interface brief.",
+        "Reconfigure host subnet mask in Packet Tracer host network settings."
+      ],
+      "ios_commands": [
+        "enable",
+        "configure terminal",
+        "interface brief",
+        "ip helper-address 10.1.1.100",
+        "end",
+        "write memory",
+        "On PC, navigate to PC -> Desktop -> IP Configuration to update Subnet Mask to match local router interface subnet mask."
+      ],
+      "verification_commands": [
+        "show running-config interface brief",
+        "show ip interface brief",
+        "ipconfig /all"
       ],
       "osi_layer": "Layer 3",
       "concept": "General Network Fault",
       "ai_mode": "Offline Demo"
     },
     "ai_validation": {
+      "command_compatibility": "PASS",
+      "technical_value_check": "PASS",
+      "interface_role_validation": "PASS",
       "root_cause_consistency": "PASS",
       "evidence_grounding": "PASS",
       "device_hallucination": "PASS",
-      "command_hallucination": "PASS",
-      "technical_value_check": "PASS",
-      "fix_relevance": "PASS",
       "overall": "PASS"
     },
     "final_result": "AUTOMATED_PASS"

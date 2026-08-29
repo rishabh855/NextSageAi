@@ -700,6 +700,10 @@ def render_new_session_workflow(
         diag_state = diag.get("status", "NO_CONFIRMED_ISSUE")
         if diag_state == "ISSUE_CONFIRMED":
             st.markdown(f'<div class="status-vocab status-vocab-fail">CONFIRMED FAULT [{tier_code}]</div>', unsafe_allow_html=True)
+        elif diag_state == "REVIEW_REQUIRED":
+            st.markdown(f'<div class="status-vocab status-vocab-evidence">REVIEW REQUIRED [{tier_code}]</div>', unsafe_allow_html=True)
+        elif diag_state == "BLOCKED":
+            st.markdown(f'<div class="status-vocab status-vocab-fail">COMMAND BLOCKED [{tier_code}]</div>', unsafe_allow_html=True)
         elif diag_state == "NEED_MORE_EVIDENCE":
             st.markdown(f'<div class="status-vocab status-vocab-evidence">NEED MORE EVIDENCE [{tier_code}]</div>', unsafe_allow_html=True)
         else:

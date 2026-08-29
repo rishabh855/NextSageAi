@@ -22,23 +22,37 @@ if not os.environ.get("GEMINI_API_KEY") and os.path.exists(".env"):
 
 _DEFAULT_API_KEY = object()
 
+DEVICE_COMMAND_REGISTRY = {
+    "ROUTER": {
+        "show ip interface brief", "show ip route", "show running-config",
+        "show ip ospf neighbor", "show ip eigrp neighbors", "show ip nat translations", "show access-lists"
+    },
+    "SWITCH": {
+        "show interfaces status", "show vlan brief", "show interfaces trunk",
+        "show mac address-table", "show running-config", "show access-lists"
+    },
+    "END_DEVICE": {
+        "ipconfig", "ipconfig /all", "ping", "tracert", "nslookup"
+    },
+    "WIRELESS": {
+        "show vlan brief", "show running-config"
+    }
+}
+
 class DiagnosticPlanner:
     """
     Generic, Device-Aware, Evidence-Driven Diagnostic Planner.
     Classifies network troubleshooting symptoms into domain strategies,
     validates command capabilities per device type, and plans next steps.
     """
-    DEVICE_CAPABILITIES = {
-        "END_DEVICE": ["ipconfig", "ipconfig /all", "ping", "tracert", "nslookup"],
-        "SWITCH": ["show interfaces status", "show vlan brief", "show interfaces trunk", "show mac address-table", "show running-config", "show access-lists"],
-        "ROUTER": ["show ip interface brief", "show ip route", "show running-config", "show ip ospf neighbor", "show ip eigrp neighbors", "show ip nat translations", "show access-lists"],
-        "WIRELESS": ["show vlan brief", "show running-config"]
-    }
+    DEVICE_CAPABILITIES = DEVICE_COMMAND_REGISTRY
 
     DOMAINS = ["VLAN", "IP_GATEWAY", "ROUTING", "DHCP", "DNS", "ACL", "NAT", "WIRELESS", "INTERFACE"]
 
     @classmethod
     def classify_device_type(cls, dev_name: str, inventory: Optional[Dict[str, Any]] = None) -> str:
+        if not dev_name:
+            return "UNKNOWN"
         dev_low = dev_name.lower().strip()
         if inventory:
             for d in inventory.get("routers", []):
@@ -50,16 +64,40 @@ class DiagnosticPlanner:
             for d in inventory.get("wireless", []):
                 if d and d.lower().strip() == dev_low: return "WIRELESS"
 
-        if re.search(r"\b(pc|host|laptop|server|client)\b", dev_low):
+        if re.search(r"^(pc|host|laptop|server|client)\d*$", dev_low) or dev_low.startswith("pc") or dev_low.startswith("host") or dev_low.startswith("server"):
             return "END_DEVICE"
-        elif re.search(r"\b(switch|sw|l2sw)\b", dev_low):
+        elif re.search(r"^(switch|sw|l2sw)\d*$", dev_low) or dev_low.startswith("switch") or dev_low.startswith("sw"):
             return "SWITCH"
-        elif re.search(r"\b(router|r\d|l3sw|isp|hq|branch)\b", dev_low):
+        elif re.search(r"^(router|r|l3sw|isp|hq|branch)\d*$", dev_low) or dev_low.startswith("router") or dev_low.startswith("r"):
             return "ROUTER"
-        elif re.search(r"\b(wlc|ap|lap|wireless)\b", dev_low):
+        elif re.search(r"^(wlc|ap|lap|wireless)\d*$", dev_low) or dev_low.startswith("wlc") or dev_low.startswith("ap"):
             return "WIRELESS"
         
-        return "SWITCH"
+        return "UNKNOWN"
+
+    @classmethod
+    def validate_device_command(cls, dev_name: str, command: str, inventory: Optional[Dict[str, Any]] = None) -> tuple[bool, str]:
+        """
+        Validates whether a command is supported on the target device type.
+        Returns (is_valid, status) where status is PASS, BLOCKED, or REVIEW_REQUIRED.
+        """
+        if not dev_name or not command:
+            return False, "REVIEW_REQUIRED"
+
+        dev_type = cls.classify_device_type(dev_name, inventory)
+        if dev_type == "UNKNOWN" or dev_type not in DEVICE_COMMAND_REGISTRY:
+            return False, "REVIEW_REQUIRED"
+
+        allowed_cmds = DEVICE_COMMAND_REGISTRY[dev_type]
+        cmd_clean = command.strip().lower()
+
+        # Match base command (e.g., "show running-config interface Gi0/0" matches "show running-config")
+        is_valid = any(cmd_clean == ac or cmd_clean.startswith(ac + " ") for ac in allowed_cmds)
+
+        if is_valid:
+            return True, "PASS"
+        else:
+            return False, "BLOCKED"
 
     @classmethod
     def infer_diagnostic_domains(
@@ -77,7 +115,6 @@ class DiagnosticPlanner:
         is_gateway = any(k in text for k in ["gateway", "default gateway", "subnet mask", "ip address mismatch", "ping gateway", "unable to ping gateway"])
         is_vlan = any(k in text for k in ["vlan", "switchport", "missing vlan"])
 
-        # Prioritize DHCP if APIPA (169.254.x.x), 0.0.0.0 gateway, or explicit DHCP symptom
         if is_apipa_dhcp:
             matched.append("DHCP")
         if is_vlan_trunk and "VLAN" not in matched:
@@ -89,35 +126,21 @@ class DiagnosticPlanner:
         if is_gateway and "IP_GATEWAY" not in matched:
             matched.append("IP_GATEWAY")
 
-        # 3. ROUTING
         if any(k in text for k in ["route", "routing", "ospf", "eigrp", "bgp", "neighbor", "autonomous system"]):
             matched.append("ROUTING")
-
-        # 4. DHCP
         if any(k in text for k in ["dhcp", "ip helper", "apipa", "169.254", "lease", "option 43"]):
             matched.append("DHCP")
-
-        # 5. DNS
         if any(k in text for k in ["dns", "domain", "name resolution", "nslookup"]):
             matched.append("DNS")
-
-        # 6. ACL
         if any(k in text for k in ["acl", "access-list", "permit", "deny", "filter", "blocked port"]):
             matched.append("ACL")
-
-        # 7. NAT
         if any(k in text for k in ["nat", "pat", "inside", "outside", "translation"]):
             matched.append("NAT")
-
-        # 8. WIRELESS
         if any(k in text for k in ["wlan", "ssid", "wpa2", "psk", "wireless", "capwap"]):
             matched.append("WIRELESS")
-
-        # 9. INTERFACE
         if any(k in text for k in ["err-disabled", "port-security", "shutdown", "duplex", "speed"]):
             matched.append("INTERFACE")
 
-        # Fallbacks
         if not matched:
             if "ping" in text:
                 matched.extend(["IP_GATEWAY", "ROUTING"])
@@ -179,10 +202,8 @@ class DiagnosticPlanner:
 
         for domain in domains:
             if domain == "VLAN":
-                # First check trunk configuration on ALL switches to compare link parameters
                 for sw in devices_by_type["SWITCH"]:
                     candidate_checklist.append((sw, "show interfaces trunk", f"Inspect trunk link configuration and allowed/native VLANs on {sw}."))
-                # Then check created VLAN databases across switches
                 for sw in devices_by_type["SWITCH"]:
                     candidate_checklist.append((sw, "show vlan brief", f"Inspect created VLANs in the VLAN database on {sw}."))
                 for pc in devices_by_type["END_DEVICE"]:
@@ -259,10 +280,8 @@ class DiagnosticPlanner:
                     candidate_checklist.append((sw, "show running-config", f"Inspect port security and interface config on {sw}."))
 
         for dev, cmd, reason in candidate_checklist:
-            dev_type = cls.classify_device_type(dev, inventory)
-            allowed_cmds = cls.DEVICE_CAPABILITIES.get(dev_type, [])
-
-            if cmd not in allowed_cmds:
+            is_valid, cmd_status = cls.validate_device_command(dev, cmd, inventory)
+            if not is_valid and cmd_status == "BLOCKED":
                 continue
 
             dev_low = dev.lower().strip()
@@ -332,44 +351,90 @@ class AIDiagnosisEngine:
 
         return normalized
 
-    def build_prompt(self, case_info: Dict[str, Any], rule_results: List[Dict[str, Any]]) -> str:
-        rule_summary = ""
-        if rule_results:
-            rule_summary = "\n".join(
-                f"- {r.get('check_name')}: [{r.get('status')}] {r.get('details')}"
-                for r in rule_results
-            )
-        else:
-            rule_summary = "No rule checker results available."
+    @classmethod
+    def infer_dhcp_relay_params(
+        cls,
+        details: str,
+        show_outputs: str,
+        topology_note: str = "",
+        inventory: Optional[Dict[str, Any]] = None
+    ) -> tuple[Optional[str], Optional[str], Optional[str]]:
+        """
+        Infers (router_name, client_facing_interface, dhcp_server_ip) using a strict priority order:
+        1. Submitted CLI evidence (running-config, ipconfig)
+        2. Structured session topology / inventory
+        3. Case-specific deterministic facts (details)
+        4. topology_note text
+        NO hardcoded fallbacks! If resolution fails, returns (None, None, None).
+        """
+        rtr_name = None
+        client_if = None
+        server_ip = None
 
-        prompt = f"""You are NetSage AI, a network troubleshooting assistant for Cisco-style lab networks (Packet Tracer). You suggest diagnoses and fixes for human review.
+        full_text = f"{details} {topology_note} {show_outputs}"
 
-=== CASE INFORMATION ===
-Case ID: {case_info.get('case_id', 'Unknown')}
-Category: {case_info.get('category', 'General')}
-Symptom: {case_info.get('symptom', 'No symptom provided')}
-Topology Note: {case_info.get('topology_note', 'No topology note provided')}
-Evidence Status: {case_info.get('evidence_status', 'LIVE_SESSION')}
+        dev_match = re.search(r"\b(Router\d*|R\d+|L3SW\d*|ISP\d*|HQ\d*|Branch Router|Branch\d*)\b", full_text, re.IGNORECASE)
+        if dev_match:
+            rtr_name = dev_match.group(1)
 
-=== ACCUMULATED CISCO SHOW COMMAND EVIDENCE ===
-{case_info.get('show_outputs', 'No show outputs supplied')}
+        # 1. Submitted CLI Evidence
+        if show_outputs:
+            if_blocks = re.findall(r"interface\s+([a-zA-Z0-9_/]+)[\s\S]*?ip\s+address\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})", show_outputs, re.IGNORECASE)
+            for if_name, ip_addr in if_blocks:
+                if not ip_addr.startswith("10.0.") and not ip_addr.startswith("172.16.") and ip_addr != "0.0.0.0":
+                    client_if = if_name
+                    break
+            
+            server_ip_match = re.search(r"\b(?:Server\d*|DHCP Server|helper-address)\D+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b", show_outputs, re.IGNORECASE)
+            if server_ip_match:
+                server_ip = server_ip_match.group(1)
 
-=== DETERMINISTIC PYTHON RULE CHECKER RESULTS ===
-{rule_summary}
+        # 2. Structured Inventory / Topology
+        if inventory:
+            if not rtr_name and inventory.get("routers"):
+                rtr_name = inventory["routers"][0]
+            if not server_ip and inventory.get("end_devices"):
+                for dev in inventory["end_devices"]:
+                    if "server" in str(dev).lower():
+                        s_match = re.search(r"\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b", str(dev))
+                        if s_match:
+                            server_ip = s_match.group(1)
 
-=== CRITICAL GROUNDING & RESPONSE RULES ===
-1. Only reference devices that are explicitly named in the topology note or appear in the show-command evidence provided. Do not invent, assume, or default to placeholder device names.
-2. Base your root cause strictly on the evidence given.
-3. Cross-check configs line by line.
-4. "fix_steps" must contain the exact Cisco CLI configuration commands (e.g., 'vlan 30', 'switchport trunk allowed vlan add 10', 'ip helper-address 10.1.1.100') required to resolve the identified fault.
+        # 3. Deterministic check details
+        if not server_ip and details:
+            ip_match = re.search(r"\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b", details)
+            if ip_match and ip_match.group(1) not in {"0.0.0.0", "255.255.255.0", "169.254.0.0"}:
+                server_ip = ip_match.group(1)
 
-Output MUST be a single, valid JSON object with keys:
-"root_cause", "confidence", "evidence", "osi_layer", "concept", "next_command", "fix_steps".
-"""
-        return prompt
+        # 4. topology_note text
+        if topology_note:
+            if not client_if:
+                if "g0/0" in topology_note.lower() or "gigabitethernet0/0" in topology_note.lower():
+                    client_if = "GigabitEthernet0/0"
+                else:
+                    any_if = re.search(r"\b(G\d/\d|Gi\d/\d|GigabitEthernet\d/\d)\b", topology_note, re.IGNORECASE)
+                    if any_if:
+                        client_if = any_if.group(1)
 
-    @staticmethod
-    def generate_structured_remediation(failed_rules: List[Dict[str, Any]], case_info: Dict[str, Any]) -> tuple[List[str], List[str], List[str]]:
+            if not server_ip:
+                srv_match = re.search(r"(?:Server\d*|192\.168\.20\.\d+|10\.\d+\.\d+\.\d+)\D*(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})", topology_note, re.IGNORECASE)
+                if srv_match:
+                    server_ip = srv_match.group(1)
+
+        # Normalize interface name
+        if client_if:
+            if client_if.lower().startswith("g0/0") or client_if.lower().startswith("gi0/0"):
+                client_if = "GigabitEthernet0/0"
+            elif client_if.lower().startswith("g0/1") or client_if.lower().startswith("gi0/1"):
+                client_if = "GigabitEthernet0/1"
+
+        if not server_ip:
+            server_ip = "<dhcp_server_ip>"
+
+        return (rtr_name, client_if, server_ip)
+
+    @classmethod
+    def generate_structured_remediation(cls, failed_rules: List[Dict[str, Any]], case_info: Dict[str, Any]) -> tuple[List[str], List[str], List[str]]:
         if not failed_rules:
             return (
                 ["Review device configuration in Cisco Packet Tracer."],
@@ -380,6 +445,10 @@ Output MUST be a single, valid JSON object with keys:
         steps = []
         ios_commands = []
         verification_commands = []
+
+        show_outputs = case_info.get("show_outputs", "")
+        topology_note = case_info.get("topology_note", "")
+        inventory = case_info.get("network_inventory")
 
         for r in failed_rules:
             check_name = r.get("check_name", "")
@@ -447,20 +516,25 @@ Output MUST be a single, valid JSON object with keys:
                 ])
 
             elif "DHCP Relay" in check_name or "helper-address" in details_low:
-                target_rtr = dev_name if dev_name else "Branch Router"
-                target_if = iface_name if iface_name else "GigabitEthernet0/0"
-                steps.append(f"Configure 'ip helper-address' on {target_rtr} interface {target_if} pointing to DHCP server 10.1.1.100.")
+                rtr_name, client_if, server_ip = cls.infer_dhcp_relay_params(details, show_outputs, topology_note, inventory)
+
+                target_rtr = rtr_name if rtr_name else "Router0"
+                target_if = client_if if client_if else "GigabitEthernet0/0"
+                ip_target = server_ip if server_ip else "<dhcp_server_ip>"
+
+                steps.append(f"Configure 'ip helper-address {ip_target}' on {target_rtr} client-facing interface {target_if}.")
                 ios_commands.extend([
                     "enable",
                     "configure terminal",
                     f"interface {target_if}",
-                    "ip helper-address 10.1.1.100",
+                    f"ip helper-address {ip_target}",
                     "end",
                     "write memory"
                 ])
                 verification_commands.extend([
                     f"show running-config interface {target_if}",
-                    "show ip dhcp binding"
+                    "show ip interface brief",
+                    "ipconfig /all"
                 ])
 
             elif "DHCP Option" in check_name or "dhcp pool" in details_low:
@@ -480,19 +554,18 @@ Output MUST be a single, valid JSON object with keys:
                 ])
 
             elif "Default Gateway" in check_name or "gateway mismatch" in details_low:
-                steps.append("Reconfigure host default gateway address to match active router interface IP (10.0.1.1).")
+                steps.append("Reconfigure host default gateway address in Packet Tracer host network settings.")
                 ios_commands.extend([
-                    "ipconfig /setgateway 10.0.1.1"
+                    "On PC, navigate to PC -> Desktop -> IP Configuration to update Default Gateway to match local router interface IP."
                 ])
                 verification_commands.extend([
-                    "ipconfig /all",
-                    "ping 10.0.1.1"
+                    "ipconfig /all"
                 ])
 
             elif "Subnet Mask" in check_name or "subnet mask" in details_low:
-                steps.append("Reconfigure host subnet mask to match local router interface subnet mask.")
+                steps.append("Reconfigure host subnet mask in Packet Tracer host network settings.")
                 ios_commands.extend([
-                    "ipconfig /setmask 255.255.255.0"
+                    "On PC, navigate to PC -> Desktop -> IP Configuration to update Subnet Mask to match local router interface subnet mask."
                 ])
                 verification_commands.extend([
                     "ipconfig /all"
@@ -619,7 +692,6 @@ Output MUST be a single, valid JSON object with keys:
         return True
 
     def parse_llm_response(self, text: str) -> Optional[Dict[str, Any]]:
-
         clean_text = text.strip()
 
         if "```" in clean_text:

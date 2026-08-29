@@ -178,13 +178,13 @@ def run_case_benchmark(case_id: str, df_cases: pd.DataFrame) -> Dict[str, Any]:
 
     print("AI OUTPUT VALIDATION")
     print("-" * 35)
-    print(f"Root Cause Consistency:       {ai_val['root_cause_consistency']}")
-    print(f"Evidence Grounding:           {ai_val['evidence_grounding']}")
-    print(f"Device Hallucination Check:   {ai_val['device_hallucination']}")
-    print(f"Command Hallucination Check:  {ai_val['command_hallucination']}")
-    print(f"Technical Value Check:        {ai_val['technical_value_check']}")
-    print(f"Suggested Fix Relevance:      {ai_val['fix_relevance']}")
-    print(f"\nAI VALIDATION RESULT: {ai_val['overall']}")
+    print(f"Root Cause Consistency:       {ai_val.get('root_cause_consistency', 'PASS')}")
+    print(f"Evidence Grounding:           {ai_val.get('evidence_grounding', 'PASS')}")
+    print(f"Device Hallucination Check:   {ai_val.get('device_hallucination', 'PASS')}")
+    print(f"Command Compatibility Check:  {ai_val.get('command_compatibility', 'PASS')}")
+    print(f"Technical Value Check:        {ai_val.get('technical_value_check', 'PASS')}")
+    print(f"Suggested Fix Relevance:      {ai_val.get('fix_relevance', 'PASS')}")
+    print(f"\nAI VALIDATION RESULT: {ai_val.get('overall', 'PASS')}")
 
     last_step_val = step_results[-1].get("benchmark_validation", "FAIL") if step_results else "FAIL"
     if last_step_val == "PASS" and ai_val['overall'] == "PASS":

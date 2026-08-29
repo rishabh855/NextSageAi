@@ -242,7 +242,19 @@ class SessionManager:
         session_data["investigation_state"] = state
         session_data["investigation_status"] = investigation_status
 
-        if state == "ISSUE_CONFIRMED" or investigation_status == "STOPPED" or not next_command:
+        if next_device and next_command:
+            from ai.diagnosis import DiagnosticPlanner
+            is_valid, cmd_status = DiagnosticPlanner.validate_device_command(
+                next_device, next_command, session_data.get("network_inventory")
+            )
+            if not is_valid and cmd_status == "BLOCKED":
+                state = "BLOCKED"
+                investigation_status = "STOPPED"
+                next_command = ""
+                next_device = ""
+                reason_for_command = f"COMMAND_VALIDATION_FAILED: Command '{next_command}' is not supported on target device '{next_device}'."
+
+        if state == "ISSUE_CONFIRMED" or state == "BLOCKED" or investigation_status == "STOPPED" or not next_command:
             session_data["investigation_status"] = "STOPPED"
             session_data["current_command"] = ""
             session_data["current_device"] = ""
